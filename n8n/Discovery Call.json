@@ -1,0 +1,2737 @@
+{
+  "name": "Discovery Call",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "a736f17d-4d35-4cb3-9b44-e48877120d85",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        16,
+        -816
+      ],
+      "id": "76120819-bbee-4277-a42b-163f2bed97f3",
+      "name": "Webhook",
+      "webhookId": "a736f17d-4d35-4cb3-9b44-e48877120d85"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "303a7426-33f8-473c-b15c-1ed5e39b2dba",
+              "leftValue": "={{ $json.body.payload.type }}",
+              "rightValue": "discovery",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        240,
+        -816
+      ],
+      "id": "3ed34af5-702e-4c91-8b76-03ecbf2c9119",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1️⃣ Access Cal.com webhook structure correctly\nconst data = $node[\"Status\"].json.body.payload.responses;\n\n// 2️⃣ Extract company name and email\nconst companyName = data.companyName?.value || null;\nconst email = data.email?.value?.toLowerCase() || null;\n\n// 3️⃣ Extract domain from email\nlet domain = null;\nif (email) {\n  const match = email.match(/@(.+)/);\n  domain = match ? match[1] : null;\n}\n\n// 4️⃣ Skip common personal email providers\nconst personalDomains = [\n  \"gmail.com\",\n  \"yahoo.com\",\n  \"hotmail.com\",\n  \"outlook.com\",\n  \"live.com\",\n  \"icloud.com\",\n  \"protonmail.com\",\n  \"me.com\",\n  \"aol.com\"\n];\n\nlet website = null;\nif (domain && !personalDomains.includes(domain)) {\n  website = `https://${domain}`;\n}\n\n// 5️⃣ Build the Allabolag search URL (encode spaces safely)\nconst allabolagUrl = companyName\n  ? `https://www.allabolag.se/bransch-s%C3%B6k?q=${encodeURIComponent(companyName)}`\n  : null;\n\n// 6️⃣ Return trimmed data\nreturn [\n  {\n    domain,\n    website,\n    allabolagUrl,\n    skipped: !website, // For logging/debugging\n    reason: !website ? \"Personal or invalid domain\" : \"Valid company domain\"\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        688,
+        -1296
+      ],
+      "id": "88c60e26-423d-4402-b181-a45feda1c3f1",
+      "name": "Regex"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.website }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1136,
+        -1392
+      ],
+      "id": "283312da-6cdd-4de5-a8c3-0f9c718dacdc",
+      "name": "Check Website"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "CHATGPT-4O-LATEST"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You are a multilingual expert AI assistant specialized in parsing business website content.",
+              "role": "system"
+            },
+            {
+              "content": "=Your task is to extract a comprehensive and detailed description of what the company does from the provided text.\nAlways output in English, regardless of the input language.\n\n⸻\n\nObjective\n\nRead and interpret the input (which may be in Swedish or English) and produce a structured JSON output containing:\n\t•\tA single, detailed “description” field summarizing what the company does — \nincluding:\n\t•\tCore activities, products, or services\n\t•\tMethods, technologies, or approaches used\n\t•\tTarget audience or customer segments\n\t•\tMission, values, or brand philosophy\n\t•\tWhat makes the company unique or differentiated\n\n⸻\n\nRules\n\t•\tAlways output in English — translate if necessary.\n\t•\tFocus only on describing what the company does (no name or metadata).\n\t•\tThe description should be rich, specific, and professional, reflecting the company’s positioning and purpose.\n\t•\tThe output must be valid JSON — no extra text or comments outside of the JSON block.\n\t•\tUse complete sentences and a natural narrative style.\n\n⸻\n\nOutput Format\n{\n  \"description\": \"Bright Interaction is a digital experience agency that designs human-centered interfaces and interactive solutions for global brands. The company specializes in combining behavioral psychology with cutting-edge UX design to create emotionally engaging customer experiences. Their target clients include technology-driven businesses and consumer brands seeking to elevate user engagement through intuitive and data-informed design.\"\n}\n\nInput:\n{{ $json.cleanText }}\n\n Notes\n\t•\tIf the input is in another language (e.g., Swedish), interpret it accurately but write the output only in English.\n\t•\tNever output anything except the JSON structure above."
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1584,
+        -1392
+      ],
+      "id": "66fd5608-949e-4f56-8149-889113b8680b",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "LeNZ3zwW5ZVsCytC",
+          "name": "OpenAi"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# Discovery Call Worklflow\n\nThis workflow connects Cal.com, Pipedrive, and Slack to automate what happens when someone books, reschedules, or cancels a meeting.\n\nThe goal is to keep the CRM organized, save manual work, and make sure every meeting and lead is properly tracked and enriched.\n\n⸻\n\n## What It Does\n\n\t•\tReceives bookings from Cal.com (Discovery Calls).\n\t•\tCreates or updates the person, company, and activity in Pipedrive.\n\t•\tUpdates or closes activities automatically when meetings are rescheduled or cancelled.\n\t•\tAdds a summary and links (website, Allabolag, notes) to the CRM so you’re prepared before the call.\n\t•\tSends a Slack notification when a new call is booked.\n\t•\tLogs errors to Airtable for easy tracking if something fails.\n\n⸻\n\n## How It Works\n\n\t1.\tWebhook trigger: Cal.com sends booking data to n8n.\n\t2.\tSwitch node: Routes based on event type (create, update, cancel).\n\t3.\tCRM search: Checks if the person/company already exists.\n\t4.\tConditional logic:\n\t•\tIf found → Update existing records.\n\t•\tIf not found → Create new ones.\n\t5.\tActivity handling:\n\t•\tCreates or updates the meeting in Pipedrive.\n\t•\tAdds enrichment notes and links.\n\t6.\tSlack alert: Notifies the sales channel with meeting details.\n\t7.\tError handling: Any failed steps are logged for review.\n\n⸻\n\n## Why It Exists\n\nTo eliminate repetitive admin work after someone books a meeting —\nso the CRM stays up to date, meetings are ready with context, and you can focus on the call instead of setup.",
+        "height": 912,
+        "width": 1232,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -832,
+        -1248
+      ],
+      "id": "49ac510e-156e-4770-84b1-0994f7a519e9",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "resource": "organization",
+        "name": "={{ $('Webhook').first().json.body.payload.responses.companyName.value }}",
+        "additionalFields": {
+          "customProperties": {
+            "property": [
+              {
+                "name": "website",
+                "value": "={{ $('Regex').first().json.domain }}"
+              },
+              {
+                "name": "add_time",
+                "value": "={{ $now }}"
+              }
+            ]
+          },
+          "label": 12
+        }
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        1936,
+        -1392
+      ],
+      "id": "1db9bc35-f85c-4d92-8410-b53804160ef0",
+      "name": "Create an organization",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "person",
+        "name": "={{ $('Webhook').first().json.body.payload.attendees[0].name }}",
+        "additionalFields": {
+          "email": [
+            "={{ $('Webhook').first().json.body.payload.responses.email.value }}"
+          ],
+          "label": 16,
+          "marketing_status": "no_consent",
+          "org_id": "={{ $json.id }}",
+          "phone": [
+            "={{ $('Webhook').first().json.body.payload.responses.smsReminderNumber.value }}"
+          ],
+          "visible_to": "3",
+          "owner_id": 26901915
+        }
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        2160,
+        -1392
+      ],
+      "id": "17bf8899-8c84-4ee8-a47d-3a2b12f98fed",
+      "name": "Create a person",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "title": "Conversion BluePrint",
+        "associateWith": "=organization",
+        "org_id": "={{ $('Create an organization').first().json.id }}",
+        "additionalFields": {
+          "person_id": "={{ $json.id }}",
+          "stage_id": 6,
+          "status": "open",
+          "visible_to": "3"
+        }
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        2384,
+        -1392
+      ],
+      "id": "ce6c5de7-b35f-4f36-84ac-d3f31f183a7f",
+      "name": "Create a deal",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "activity",
+        "subject": "=Discovery Call with  {{ $('Webhook').first().json.body.payload.responses.name.value.split(\" \")[0] }}",
+        "type": "Meeting",
+        "additionalFields": {
+          "deal_id": "={{ $('Create a deal').first().json.id }}",
+          "due_date": "={{ $json.due_date }}",
+          "note": "=Demo Meeting Link:<br>\nhttps://cal.com/brightinteraction/demo\n<br><br>\nCalculator:<br>\nhttps://form.jotform.com/252874326301050\n<br><br>\nProposal Link:<br>\nhttps://form.jotform.com/252874326301050?companyId={{ $('Create an organization').first().json.id }}",
+          "org_id": "={{ $('Create an organization').first().json.id }}",
+          "person_id": "={{ $('Create a person').first().json.id }}",
+          "user_id": 26901915,
+          "customProperties": {
+            "property": [
+              {
+                "name": "due_time",
+                "value": "={{ $json.due_time }}"
+              },
+              {
+                "name": "duration",
+                "value": "={{ $json.duration }}"
+              },
+              {
+                "name": "conference_meeting_client",
+                "value": "google_meet"
+              },
+              {
+                "name": "conference_meeting_url",
+                "value": "={{ $('Webhook').first().json.body.payload.metadata.videoCallUrl }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        2832,
+        -1392
+      ],
+      "id": "140379bc-9c16-4ba5-ba61-d34df2394ffd",
+      "name": "Create an activity",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "note",
+        "content": "={{ $('Message a model').first().json.message.content.description }}\n\nAllabolag:\n{{ $('Regex').first().json.allabolagUrl }}",
+        "additionalFields": {
+          "deal_id": "={{ $('Create a deal').first().json.id }}",
+          "org_id": "={{ $('Create an organization').first().json.id }}",
+          "person_id": "={{ $('Create a person').first().json.id }}"
+        }
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        3056,
+        -1392
+      ],
+      "id": "7ecb24cc-ce8b-4176-8527-4add9a0d5b7e",
+      "name": "Create a note",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.triggerEvent }}",
+                    "rightValue": "BOOKING_CREATED",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "4dca1286-0951-4f96-9312-be9224878579"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Created"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "ead31ed0-954b-4a0c-add7-28ee1a557a62",
+                    "leftValue": "={{ $json.body.triggerEvent }}",
+                    "rightValue": "BOOKING_CANCELLED",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Canceled"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "349554ce-036a-4597-8d41-a17dac4d32d4",
+                    "leftValue": "={{ $json.body.triggerEvent }}",
+                    "rightValue": "BOOKING_REJECTED",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Rejected"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "57ffec66-bdb3-481a-8884-3cf4391dd359",
+                    "leftValue": "={{ $json.body.triggerEvent }}",
+                    "rightValue": "BOOKING_NO",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "No Show"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "8a1547da-dc3b-4de6-9c20-9d5cce0bbfc2",
+                    "leftValue": "={{ $json.body.triggerEvent }}",
+                    "rightValue": "BOOKING_RESCHEDULED",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Rescheduled"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        464,
+        -864
+      ],
+      "id": "099ad29d-3d9d-403e-82f4-8f84e7e4cca9",
+      "name": "Status"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "a29caaf9-d795-4047-aa9d-06a18849724a",
+                    "leftValue": "={{ $json.skipped }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "false",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Exist"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "bee9f4ea-ae9a-4647-b784-69b6df02a652",
+                    "leftValue": "={{ $json.skipped }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "DNE"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        912,
+        -1296
+      ],
+      "id": "10bc6fc3-a0fa-44d7-affa-b43784f80fe3",
+      "name": "Website Exist?"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1️⃣ Get HTML data from the previous node\nlet html = $json.data || \"\";\n\n// 2️⃣ Extract page title\nconst titleMatch = html.match(/<title>(.*?)<\\/title>/i);\n\n// 3️⃣ Remove <script> and <style> blocks\nhtml = html\n  .replace(/<script[\\s\\S]*?<\\/script>/gi, \" \")\n  .replace(/<style[\\s\\S]*?<\\/style>/gi, \" \");\n\n// 4️⃣ Strip all remaining HTML tags\nlet text = html.replace(/<[^>]+>/g, \" \");\n\n// 5️⃣ Decode common HTML entities\ntext = text\n  .replace(/&amp;/g, \"&\")\n  .replace(/&quot;/g, '\"')\n  .replace(/&#39;/g, \"'\")\n  .replace(/&lt;/g, \"<\")\n  .replace(/&gt;/g, \">\");\n\n// 6️⃣ Remove cookie / footer / navigation / legal noise\ntext = text.replace(\n  /(cookie|integritetspolicy|användarvillkor|consent|preferences|reject|accept|privacy policy|thank you! your submission|oops! something went wrong|manage by category|analytics measures usage)/gi,\n  \" \"\n);\ntext = text.replace(/\\b(Hem|Om oss|Tjänster|Blogg|Kontakta oss|FAQ|Sidor|English|Svenska|Företaget|Sitemap)\\b/gi, \" \");\n\n// 7️⃣ Collapse whitespace\ntext = text.replace(/\\s+/g, \" \").trim();\n\n// 8️⃣ Optionally cut off anything after © (usually footer)\nconst cutoff = text.indexOf(\"©\");\nif (cutoff > 0) text = text.slice(0, cutoff).trim();\n\n// 9️⃣ Return clean text + title only\nreturn [\n  {\n    title: titleMatch ? titleMatch[1] : null,\n    cleanText: text\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        -1392
+      ],
+      "id": "efe47ef6-d8af-45b2-b55d-76b2b4548df1",
+      "name": "Trim HTML"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract start time from the \"Status\" node\nconst startTime = $('Status').item.json.body.payload.startTime;\n\n// Optionally extract or define end time\nconst endTime = $('Status').item.json.body.payload.endTime;\n\n// Parse dates\nconst startUTC = new Date(startTime);\nconst endUTC = endTime ? new Date(endTime) : new Date(startUTC.getTime() + 30 * 60 * 1000); // default 30 min if missing\n\n// Adjust to local timezone automatically\n// (Handles CET/CEST daylight saving)\nconst localOffset = startUTC.getTimezoneOffset() * 60 * 1000;\nconst startLocal = new Date(startUTC.getTime() - localOffset);\nconst endLocal = new Date(endUTC.getTime() - localOffset);\n\n// Calculate duration in milliseconds\nconst durationMs = endLocal - startLocal;\n\n// Convert to hours, minutes, seconds\nconst hours = String(Math.floor(durationMs / 1000 / 60 / 60)).padStart(2, '0');\nconst minutes = String(Math.floor((durationMs / 1000 / 60) % 60)).padStart(2, '0');\nconst seconds = '00';\n\n// Format output\nconst due_date = startLocal.toISOString().slice(0, 10);   // YYYY-MM-DD\nconst due_time = startLocal.toISOString().slice(11, 19);  // HH:mm:ss\nconst duration = `${hours}:${minutes}:${seconds}`;        // HH:mm:ss\n\n// Return in a clean JSON object\nreturn [{ due_date, due_time, duration }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2608,
+        -1392
+      ],
+      "id": "847ecc91-c338-4dfd-a1f8-33bd33b75eea",
+      "name": "Parse Timestamp"
+    },
+    {
+      "parameters": {
+        "resource": "organization",
+        "name": "={{ $('Webhook').first().json.body.payload.responses.companyName.value }}",
+        "additionalFields": {
+          "customProperties": {
+            "property": [
+              {
+                "name": "website",
+                "value": "={{ $('Regex').first().json.domain }}"
+              },
+              {
+                "name": "add_time",
+                "value": "={{ $now }}"
+              }
+            ]
+          },
+          "label": 12
+        }
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        1136,
+        -1200
+      ],
+      "id": "b91b202c-4cea-47d9-b1d8-7e4d6da89049",
+      "name": "Create an organization2",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "person",
+        "name": "={{ $('Webhook').first().json.body.payload.attendees[0].name }}",
+        "additionalFields": {
+          "email": [
+            "={{ $('Webhook').first().json.body.payload.responses.email.value }}"
+          ],
+          "label": 16,
+          "marketing_status": "no_consent",
+          "org_id": "={{ $json.id }}",
+          "phone": [
+            "={{ $('Webhook').first().json.body.payload.responses.smsReminderNumber.value }}"
+          ],
+          "visible_to": "3",
+          "owner_id": 26901915
+        }
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        -1200
+      ],
+      "id": "135e71d0-be00-47e6-95e5-07c26a2136aa",
+      "name": "Create a person2",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "title": "Conversion BluePrint",
+        "associateWith": "=organization",
+        "org_id": "={{ $('Create an organization2').first().json.id }}",
+        "additionalFields": {
+          "person_id": "={{ $json.id }}",
+          "stage_id": 6,
+          "status": "open",
+          "visible_to": "3"
+        }
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        1648,
+        -1200
+      ],
+      "id": "b25e42eb-0331-4c99-9545-fc74b6c104d0",
+      "name": "Create a deal2",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "activity",
+        "subject": "Discovery",
+        "type": "Meeting",
+        "additionalFields": {
+          "deal_id": "={{ $('Create a deal2').first().json.id }}",
+          "due_date": "={{ $json.due_date }}",
+          "note": "Demo Meeting Link:<br>\nhttps://cal.com/brightinteraction/demo\n<br><br>\nCalculator:<br>\nhttps://form.jotform.com/252874326301050\n<br><br>\nProposal Link:<br>\nhttps://form.jotform.com/251394424097057",
+          "org_id": "={{ $('Create an organization2').first().json.id }}",
+          "person_id": "={{ $('Create a person2').first().json.id }}",
+          "user_id": 26901915,
+          "customProperties": {
+            "property": [
+              {
+                "name": "due_time",
+                "value": "={{ $json.due_time }}"
+              },
+              {
+                "name": "duration",
+                "value": "={{ $json.duration }}"
+              },
+              {
+                "name": "conference_meeting_client",
+                "value": "google_meet"
+              },
+              {
+                "name": "conference_meeting_url",
+                "value": "={{ $('Webhook').first().json.body.payload.metadata.videoCallUrl }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        2160,
+        -1200
+      ],
+      "id": "3fdf5c2b-8375-4c5b-8e4f-878272bf0792",
+      "name": "Create an activity2",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract start time from the \"Status\" node\nconst startTime = $('Status').item.json.body.payload.startTime;\n\n// Optionally extract or define end time\nconst endTime = $('Status').item.json.body.payload.endTime;\n\n// Parse dates\nconst startUTC = new Date(startTime);\nconst endUTC = endTime ? new Date(endTime) : new Date(startUTC.getTime() + 30 * 60 * 1000); // default 30 min if missing\n\n// Adjust to local timezone automatically\n// (Handles CET/CEST daylight saving)\nconst localOffset = startUTC.getTimezoneOffset() * 60 * 1000;\nconst startLocal = new Date(startUTC.getTime() - localOffset);\nconst endLocal = new Date(endUTC.getTime() - localOffset);\n\n// Calculate duration in milliseconds\nconst durationMs = endLocal - startLocal;\n\n// Convert to hours, minutes, seconds\nconst hours = String(Math.floor(durationMs / 1000 / 60 / 60)).padStart(2, '0');\nconst minutes = String(Math.floor((durationMs / 1000 / 60) % 60)).padStart(2, '0');\nconst seconds = '00';\n\n// Format output\nconst due_date = startLocal.toISOString().slice(0, 10);   // YYYY-MM-DD\nconst due_time = startLocal.toISOString().slice(11, 19);  // HH:mm:ss\nconst duration = `${hours}:${minutes}:${seconds}`;        // HH:mm:ss\n\n// Return in a clean JSON object\nreturn [{ due_date, due_time, duration }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1936,
+        -1200
+      ],
+      "id": "d8410954-96db-4828-ab63-1abaeb27c482",
+      "name": "Parse Timestamp1"
+    },
+    {
+      "parameters": {
+        "amount": 3.21,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        688,
+        -624
+      ],
+      "id": "c1d3eef6-bae0-41b7-ac64-635e76629796",
+      "name": "Wait",
+      "webhookId": "ceb54bd3-a15b-487e-8af9-caad37699920"
+    },
+    {
+      "parameters": {
+        "amount": 4.21,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        688,
+        -432
+      ],
+      "id": "9974eef3-7692-4432-988c-c67e6b11e865",
+      "name": "Wait1",
+      "webhookId": "ceb54bd3-a15b-487e-8af9-caad37699920"
+    },
+    {
+      "parameters": {
+        "amount": 4.21,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        688,
+        -816
+      ],
+      "id": "3809ba67-1386-4f71-97d6-ed09f813e16d",
+      "name": "Wait2",
+      "webhookId": "ceb54bd3-a15b-487e-8af9-caad37699920"
+    },
+    {
+      "parameters": {
+        "amount": 4.47,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        688,
+        -1008
+      ],
+      "id": "2d513fdd-dedc-4293-b257-b8e2694218e1",
+      "name": "Wait3",
+      "webhookId": "ceb54bd3-a15b-487e-8af9-caad37699920"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.payload.attendees[0].email }}",
+        "subject": "=No problem, let’s find a better time",
+        "message": "=Hey {{ $json.body.payload.responses.name.value.split(\" \")[0] }},\n\nThanks for letting me know. Totally understand things come up.\n<br><br>\nLet’s lock in a time that suits you better. This’ll be a quick run-through of how we remove all the manual work from sales and onboarding within 30 days or less, freeing your team to focus on closing more deals.\n<br><br>\nYou can grab a <a href=\"https://brightinteraction.com\" style=\"color:#000000;text-decoration:none;\">new slot here.</a>\n<br><br>\nOr just reply with a day that works best.\n<br><br>\nBest,<br>\nTom\n<br><br>\n<table style=\"font-family:'Poppins','Nunito',sans-serif;color:#000000;background-color:#ffffff;padding:10px 0;border-collapse:collapse;width:100%;max-width:600px;\">\n  <tr>\n    <td style=\"vertical-align:middle;padding-right:15px;width:120px;\">\n      <div style=\"background-color:#ffffff;padding:5px;border-radius:4px;display:inline-block;vertical-align:middle;\">\n        <img src=\"https://cdn.prod.website-files.com/6830c8a9084bf2aafa8157f6/68f577015ea873d2f3d07978_Logo%20Email%20Footer.png\"\n             alt=\"Bright Interaction Logo\"\n             width=\"120\"\n             style=\"display:block;max-width:120px;height:auto;\">\n      </div>\n    </td>\n    <td style=\"vertical-align:middle;padding-left:10px;\">\n      <div style=\"font-weight:600;font-size:16px;\">Tom Isgren</div>\n      <div style=\"font-size:14px;color:#555;\">Founder @ Bright Interaction</div>\n      <div style=\"font-size:14px;margin-top:6px;\">\n        <a href=\"mailto:tom@brightinteraction.com\" style=\"color:#1a73e8;text-decoration:none;\">tom@brightinteraction.com</a>\n      </div>\n      <div style=\"font-size:14px;\">+46 762 978 035</div>\n      <div style=\"font-size:14px;\">\n        <a href=\"https://brightinteraction.com\" style=\"color:#000000;text-decoration:none;\">brightinteraction.com</a>\n      </div>\n      <div style=\"font-size:14px;margin-top:4px;\">\n        <a href=\"https://www.linkedin.com/in/tom-brightinteraction/\" style=\"color:#731963;text-decoration:none;\">LinkedIn</a>\n      </div>\n    </td>\n  </tr>\n  <tr>\n    <td colspan=\"2\" style=\"border-top:1px solid #f0f0f0;padding-top:8px;font-size:12px;color:#777;text-align:left;\">\n      © 2025 Bright Interaction Automation Agency. All rights reserved.\n    </td>\n  </tr>\n</table>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        912,
+        -1008
+      ],
+      "id": "fc70bdb8-2822-4282-9a43-f7f67822a873",
+      "name": "Canceled Email",
+      "webhookId": "74e0c7ba-0d81-495b-ba1d-b5e8ce967ac0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N8Z7eh1G5JC1M3Qo",
+          "name": "Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.payload.attendees[0].email }}",
+        "subject": "=No worries about today, {{ $json.body.payload.responses.name.value.split(\" \") [0] }}",
+        "message": "=Hey {{ $json.body.payload.responses.name.value.split(\" \")[0] }},\n<br><br>  \nTotally understand that things can get busy. Let’s keep it simple. \n<br><br>\nWhen the timing feels right, I can walk you through how we help teams remove the manual work from their sales and onboarding within 30 days or less, so your reps can focus on closing more deals.  \n<br><br>\nWould you like me to circle back in a few weeks, or do you want to grab a new slot now while it’s top of mind?\n<br><br>\nKind regards,<br>\nTom\n<br><br>\n<table style=\"font-family:'Poppins','Nunito',sans-serif;color:#000000;background-color:#ffffff;padding:10px 0;border-collapse:collapse;width:100%;max-width:600px;\">\n  <tr>\n    <td style=\"vertical-align:middle;padding-right:15px;width:120px;\">\n      <div style=\"background-color:#ffffff;padding:5px;border-radius:4px;display:inline-block;vertical-align:middle;\">\n        <img src=\"https://cdn.prod.website-files.com/6830c8a9084bf2aafa8157f6/68f577015ea873d2f3d07978_Logo%20Email%20Footer.png\"\n             alt=\"Bright Interaction Logo\"\n             width=\"120\"\n             style=\"display:block;max-width:120px;height:auto;\">\n      </div>\n    </td>\n    <td style=\"vertical-align:middle;padding-left:10px;\">\n      <div style=\"font-weight:600;font-size:16px;\">Tom Isgren</div>\n      <div style=\"font-size:14px;color:#555;\">Founder @ Bright Interaction</div>\n      <div style=\"font-size:14px;margin-top:6px;\">\n        <a href=\"mailto:tom@brightinteraction.com\" style=\"color:#1a73e8;text-decoration:none;\">tom@brightinteraction.com</a>\n      </div>\n      <div style=\"font-size:14px;\">+46 762 978 035</div>\n      <div style=\"font-size:14px;\">\n        <a href=\"https://brightinteraction.com\" style=\"color:#000000;text-decoration:none;\">brightinteraction.com</a>\n      </div>\n      <div style=\"font-size:14px;margin-top:4px;\">\n        <a href=\"https://www.linkedin.com/in/tom-brightinteraction/\" style=\"color:#731963;text-decoration:none;\">LinkedIn</a>\n      </div>\n    </td>\n  </tr>\n  <tr>\n    <td colspan=\"2\" style=\"border-top:1px solid #f0f0f0;padding-top:8px;font-size:12px;color:#777;text-align:left;\">\n      © 2025 Bright Interaction Automation Agency. All rights reserved.\n    </td>\n  </tr>\n</table>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        912,
+        -816
+      ],
+      "id": "99816a79-af1e-4289-846c-5b251cf52fa7",
+      "name": "Rejected Email",
+      "webhookId": "74e0c7ba-0d81-495b-ba1d-b5e8ce967ac0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N8Z7eh1G5JC1M3Qo",
+          "name": "Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.payload.attendees[0].email }}",
+        "subject": "=No worries about today, {{ $json.body.payload.responses.name.value.split(\" \") [0] }}",
+        "message": "=Hey {{ $json.body.payload.responses.name.value.split(\" \")[0] }},\n<br><br>  \nThanks for rescheduling. I know things can get hectic, and I appreciate you making time. \n<br><br>\nI’ll walk you through a simple way to eliminate the manual work in your sales and onboarding — all within 30 days or less.  \n<br><br>\nIf anything changes before then, you can always adjust the time again.\n<br><br>\nLooking forward to our chat!\n<br><br>\nBest,<br>\nTom\n<br><br>\n<table style=\"font-family:'Poppins','Nunito',sans-serif;color:#000000;background-color:#ffffff;padding:10px 0;border-collapse:collapse;width:100%;max-width:600px;\">\n  <tr>\n    <td style=\"vertical-align:middle;padding-right:15px;width:120px;\">\n      <div style=\"background-color:#ffffff;padding:5px;border-radius:4px;display:inline-block;vertical-align:middle;\">\n        <img src=\"https://cdn.prod.website-files.com/6830c8a9084bf2aafa8157f6/68f577015ea873d2f3d07978_Logo%20Email%20Footer.png\"\n             alt=\"Bright Interaction Logo\"\n             width=\"120\"\n             style=\"display:block;max-width:120px;height:auto;\">\n      </div>\n    </td>\n    <td style=\"vertical-align:middle;padding-left:10px;\">\n      <div style=\"font-weight:600;font-size:16px;\">Tom Isgren</div>\n      <div style=\"font-size:14px;color:#555;\">Founder @ Bright Interaction</div>\n      <div style=\"font-size:14px;margin-top:6px;\">\n        <a href=\"mailto:tom@brightinteraction.com\" style=\"color:#1a73e8;text-decoration:none;\">tom@brightinteraction.com</a>\n      </div>\n      <div style=\"font-size:14px;\">+46 762 978 035</div>\n      <div style=\"font-size:14px;\">\n        <a href=\"https://brightinteraction.com\" style=\"color:#000000;text-decoration:none;\">brightinteraction.com</a>\n      </div>\n      <div style=\"font-size:14px;margin-top:4px;\">\n        <a href=\"https://www.linkedin.com/in/tom-brightinteraction/\" style=\"color:#731963;text-decoration:none;\">LinkedIn</a>\n      </div>\n    </td>\n  </tr>\n  <tr>\n    <td colspan=\"2\" style=\"border-top:1px solid #f0f0f0;padding-top:8px;font-size:12px;color:#777;text-align:left;\">\n      © 2025 Bright Interaction Automation Agency. All rights reserved.\n    </td>\n  </tr>\n</table>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        912,
+        -432
+      ],
+      "id": "8f0e8d05-b7d2-4c88-9d33-5339f62d80cd",
+      "name": "Rescheduled Email",
+      "webhookId": "74e0c7ba-0d81-495b-ba1d-b5e8ce967ac0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N8Z7eh1G5JC1M3Qo",
+          "name": "Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.payload.attendees[0].email }}",
+        "subject": "=No worries about today, {{ $json.body.payload.responses.name.value.split(\" \") [0] }}",
+        "message": "=Hey {{ $json.body.payload.responses.name.value.split(\" \")[0] }},\n<br><br>  \nTotally understand that things can get busy.\n<br><br>\nWhen you’re ready, I can walk you through how we help teams remove the manual work from their sales and onboarding — all within 30 days or less, so your reps can stay focused on closing more deals.  \n<br><br>\nYou can grab a new slot here if it’s easier:<br>\n\n<br><br>\nOtherwise, I’m happy to circle back in a few weeks.\n<br><br>\nCheers,<br>\nTom\n<br><br>\n<table style=\"font-family:'Poppins','Nunito',sans-serif;color:#000000;background-color:#ffffff;padding:10px 0;border-collapse:collapse;width:100%;max-width:600px;\">\n  <tr>\n    <td style=\"vertical-align:middle;padding-right:15px;width:120px;\">\n      <div style=\"background-color:#ffffff;padding:5px;border-radius:4px;display:inline-block;vertical-align:middle;\">\n        <img src=\"https://cdn.prod.website-files.com/6830c8a9084bf2aafa8157f6/68f577015ea873d2f3d07978_Logo%20Email%20Footer.png\"\n             alt=\"Bright Interaction Logo\"\n             width=\"120\"\n             style=\"display:block;max-width:120px;height:auto;\">\n      </div>\n    </td>\n    <td style=\"vertical-align:middle;padding-left:10px;\">\n      <div style=\"font-weight:600;font-size:16px;\">Tom Isgren</div>\n      <div style=\"font-size:14px;color:#555;\">Founder @ Bright Interaction</div>\n      <div style=\"font-size:14px;margin-top:6px;\">\n        <a href=\"mailto:tom@brightinteraction.com\" style=\"color:#1a73e8;text-decoration:none;\">tom@brightinteraction.com</a>\n      </div>\n      <div style=\"font-size:14px;\">+46 762 978 035</div>\n      <div style=\"font-size:14px;\">\n        <a href=\"https://brightinteraction.com\" style=\"color:#000000;text-decoration:none;\">brightinteraction.com</a>\n      </div>\n      <div style=\"font-size:14px;margin-top:4px;\">\n        <a href=\"https://www.linkedin.com/in/tom-brightinteraction/\" style=\"color:#731963;text-decoration:none;\">LinkedIn</a>\n      </div>\n    </td>\n  </tr>\n  <tr>\n    <td colspan=\"2\" style=\"border-top:1px solid #f0f0f0;padding-top:8px;font-size:12px;color:#777;text-align:left;\">\n      © 2025 Bright Interaction Automation Agency. All rights reserved.\n    </td>\n  </tr>\n</table>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        912,
+        -624
+      ],
+      "id": "c23a24e2-7f99-4704-b1a0-60e4f87be2d9",
+      "name": "No-Show Email",
+      "webhookId": "74e0c7ba-0d81-495b-ba1d-b5e8ce967ac0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N8Z7eh1G5JC1M3Qo",
+          "name": "Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "person",
+        "operation": "search",
+        "limit": 1,
+        "term": "={{ $('Webhook').first().json.body.payload.responses.email.value }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        1136,
+        -1008
+      ],
+      "id": "9b5b1a68-3d33-4ef8-ae20-3e02062afdac",
+      "name": "Search a person",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "person",
+        "operation": "search",
+        "limit": 1,
+        "term": "={{ $('Webhook').first().json.body.payload.responses.email.value }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        1136,
+        -816
+      ],
+      "id": "d8444747-033e-426f-8872-f79860de21ad",
+      "name": "Search a person1",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "person",
+        "operation": "search",
+        "limit": 1,
+        "term": "={{ $json.body.payload.responses.email.value }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        -48,
+        -2096
+      ],
+      "id": "ad05fc9f-32f0-423e-a7d1-7853b9460fbe",
+      "name": "Search a person4",
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "bf3c507a-c0d3-46af-87f8-d03be7d6afa7",
+              "leftValue": "",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        176,
+        -2096
+      ],
+      "id": "f3a501fb-e9a2-4b4f-ad61-6dced095ff38",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "resource": "activity",
+        "operation": "update",
+        "activityId": "={{ $('Get many deal activities1').first().json.id }}",
+        "updateFields": {
+          "due_date": "={{ $json.due_date }}",
+          "customProperties": {
+            "property": [
+              {
+                "name": "due_time",
+                "value": "={{ $json.due_time }}"
+              },
+              {
+                "name": "duration",
+                "value": "={{ $json.duration }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        2160,
+        -432
+      ],
+      "id": "9dd900c3-7c21-44b9-b13a-b7f3d697f09f",
+      "name": "Update an activity",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract start time from the \"Status\" node\nconst startTime = $('Status').item.json.body.payload.startTime;\n\n// Optionally extract or define end time\nconst endTime = $('Status').item.json.body.payload.endTime;\n\n// Parse dates\nconst startUTC = new Date(startTime);\nconst endUTC = endTime ? new Date(endTime) : new Date(startUTC.getTime() + 30 * 60 * 1000); // default 30 min if missing\n\n// Adjust to local timezone automatically\n// (Handles CET/CEST daylight saving)\nconst localOffset = startUTC.getTimezoneOffset() * 60 * 1000;\nconst startLocal = new Date(startUTC.getTime() - localOffset);\nconst endLocal = new Date(endUTC.getTime() - localOffset);\n\n// Calculate duration in milliseconds\nconst durationMs = endLocal - startLocal;\n\n// Convert to hours, minutes, seconds\nconst hours = String(Math.floor(durationMs / 1000 / 60 / 60)).padStart(2, '0');\nconst minutes = String(Math.floor((durationMs / 1000 / 60) % 60)).padStart(2, '0');\nconst seconds = '00';\n\n// Format output\nconst due_date = startLocal.toISOString().slice(0, 10);   // YYYY-MM-DD\nconst due_time = startLocal.toISOString().slice(11, 19);  // HH:mm:ss\nconst duration = `${hours}:${minutes}:${seconds}`;        // HH:mm:ss\n\n// Return in a clean JSON object\nreturn [{ due_date, due_time, duration }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1936,
+        -432
+      ],
+      "id": "5a04b4e6-97fd-4756-b68e-ec54e2e41b43",
+      "name": "Parse Timestamp2"
+    },
+    {
+      "parameters": {
+        "resource": "person",
+        "operation": "update",
+        "personId": "={{ $('Search a person4').item.json.id }}",
+        "updateFields": {
+          "label": 15,
+          "org_id": "={{ $json.id }}",
+          "phone": [
+            "={{ $('Status').item.json.body.payload.responses.smsReminderNumber.value }}"
+          ],
+          "visible_to": "3"
+        }
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        1872,
+        -2192
+      ],
+      "id": "335d3425-01cf-4e7b-84c2-dfd354499734",
+      "name": "Update a person",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.website }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        624,
+        -2096
+      ],
+      "id": "a2d45014-4b18-43f9-b28e-8ffff2be89b8",
+      "name": "Check Website1"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "CHATGPT-4O-LATEST"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You are a multilingual expert AI assistant specialized in parsing business website content.",
+              "role": "system"
+            },
+            {
+              "content": "=Your task is to extract a comprehensive and detailed description of what the company does from the provided text.\nAlways output in English, regardless of the input language.\n\n⸻\n\nObjective\n\nRead and interpret the input (which may be in Swedish or English) and produce a structured JSON output containing:\n\t•\tA single, detailed “description” field summarizing what the company does — \nincluding:\n\t•\tCore activities, products, or services\n\t•\tMethods, technologies, or approaches used\n\t•\tTarget audience or customer segments\n\t•\tMission, values, or brand philosophy\n\t•\tWhat makes the company unique or differentiated\n\n⸻\n\nRules\n\t•\tAlways output in English — translate if necessary.\n\t•\tFocus only on describing what the company does (no name or metadata).\n\t•\tThe description should be rich, specific, and professional, reflecting the company’s positioning and purpose.\n\t•\tThe output must be valid JSON — no extra text or comments outside of the JSON block.\n\t•\tUse complete sentences and a natural narrative style.\n\n⸻\n\nOutput Format\n{\n  \"description\": \"Bright Interaction is a digital experience agency that designs human-centered interfaces and interactive solutions for global brands. The company specializes in combining behavioral psychology with cutting-edge UX design to create emotionally engaging customer experiences. Their target clients include technology-driven businesses and consumer brands seeking to elevate user engagement through intuitive and data-informed design.\"\n}\n\nInput:\n{{ $json.cleanText }}\n\n Notes\n\t•\tIf the input is in another language (e.g., Swedish), interpret it accurately but write the output only in English.\n\t•\tNever output anything except the JSON structure above."
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1296,
+        -2192
+      ],
+      "id": "d83cb1d3-9fc0-42ea-91e8-d70d7d7ebca0",
+      "name": "Message a model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "LeNZ3zwW5ZVsCytC",
+          "name": "OpenAi"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C086UB5G5MK",
+          "mode": "list",
+          "cachedResultName": "leads"
+        },
+        "messageType": "block",
+        "blocksUi": "={\n\t\"blocks\": [\n\t\t{\n\t\t\t\"type\": \"section\",\n\t\t\t\"text\": {\n\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\"text\": \"New Lead:\\n*<https://brightinteraction.pipedrive.com/organization/{{ $('Create an organization1').item.json.id }}|{{ $('Status').item.json.body.payload.responses.name.value }}>*\"\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"type\": \"section\",\n\t\t\t\"fields\": [\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\t\"text\": \"*Company:*\\n<{{ $('Regex2').item.json.allabolagUrl }}|{{ $('Status').item.json.body.payload.responses.companyName.value }}>\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\t\"text\": \"*When:*\\n{{ $('Parse Timestamp3').item.json.due_date }} {{ $('Parse Timestamp3').item.json.due_time.slice(0, 5) }}\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\t\"text\": \"*Email:*\\n{{ $('Status').item.json.body.payload.responses.email.value }}\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\t\"text\": \"*Phone:*\\n{{ $('Webhook').item.json.body.payload.responses.smsReminderNumber.value }}\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\t\"text\": \"*Website:*\\n{{ $('Regex2').item.json.website }}\"\n\t\t\t\t}\n\t\t\t]\n\t\t},\n\t\t{\n\t\t\t\"type\": \"divider\"\n\t\t},\n\t\t{\n\t\t\t\"type\": \"section\",\n\t\t\t\"text\": {\n\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\"text\": \"*Additional notes:*\\n{{ $('Status').item.json.body.payload.responses.notes.value }}\"\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"type\": \"actions\",\n\t\t\t\"elements\": [\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"button\",\n\t\t\t\t\t\"text\": {\n\t\t\t\t\t\t\"type\": \"plain_text\",\n\t\t\t\t\t\t\"emoji\": true,\n\t\t\t\t\t\t\"text\": \"Approve\"\n\t\t\t\t\t},\n\t\t\t\t\t\"style\": \"primary\",\n\t\t\t\t\t\"value\": \"Qualified\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"button\",\n\t\t\t\t\t\"text\": {\n\t\t\t\t\t\t\"type\": \"plain_text\",\n\t\t\t\t\t\t\"emoji\": true,\n\t\t\t\t\t\t\"text\": \"Deny\"\n\t\t\t\t\t},\n\t\t\t\t\t\"style\": \"danger\",\n\t\t\t\t\t\"value\": \"Unqualified\"\n\t\t\t\t}\n\t\t\t]\n\t\t}\n\t]\n}",
+        "otherOptions": {
+          "unfurl_links": true
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        2992,
+        -2192
+      ],
+      "id": "3f676a79-2b44-408f-860a-dc143503ad65",
+      "name": "Notification in Lead Channel1",
+      "webhookId": "c2609ac9-71ab-4e26-a03b-12132d15e94b",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "si4axd1ESHjcPLbx",
+          "name": "Jeeves"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "organization",
+        "name": "={{ $('Status').item.json.body.payload.responses.companyName.value }}",
+        "additionalFields": {
+          "customProperties": {
+            "property": [
+              {
+                "name": "website",
+                "value": "={{ $('Regex2').item.json.domain }}"
+              },
+              {
+                "name": "add_time",
+                "value": "={{ $now }}"
+              }
+            ]
+          },
+          "label": 12
+        }
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        1648,
+        -2192
+      ],
+      "id": "ba654dc0-f897-46bd-9469-b970aa7f3f31",
+      "name": "Create an organization1",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "title": "Conversion BluePrint",
+        "associateWith": "=organization",
+        "org_id": "={{ $('Create an organization1').item.json.id }}",
+        "additionalFields": {
+          "person_id": "={{ $json.id }}",
+          "stage_id": 6,
+          "status": "open",
+          "visible_to": "3"
+        }
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        2096,
+        -2192
+      ],
+      "id": "6137f426-1a80-4c96-a4a6-5a928570b3aa",
+      "name": "Create a deal1",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "activity",
+        "subject": "Discovery",
+        "type": "Meeting",
+        "additionalFields": {
+          "deal_id": "={{ $('Create a deal1').first().json.id }}",
+          "due_date": "={{ $json.due_date }}",
+          "note": "Demo Meeting Link:<br>\nhttps://cal.com/brightinteraction/demo\n<br><br>\nCalculator:<br>\nhttps://form.jotform.com/252874326301050\n<br><br>\nProposal Link:<br>\nhttps://form.jotform.com/251394424097057",
+          "org_id": "={{ $('Create an organization1').first().json.id }}",
+          "person_id": "={{ $('Update a person').first().json.id }}",
+          "user_id": 26901915,
+          "customProperties": {
+            "property": [
+              {
+                "name": "due_time",
+                "value": "={{ $json.due_time }}"
+              },
+              {
+                "name": "duration",
+                "value": "={{ $json.duration }}"
+              },
+              {
+                "name": "conference_meeting_client",
+                "value": "google_meet"
+              },
+              {
+                "name": "conference_meeting_url",
+                "value": "={{ $('Status').first().json.body.payload.metadata.videoCallUrl }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        2544,
+        -2192
+      ],
+      "id": "6e7c47b5-885a-458d-a0fd-5ed69695d16b",
+      "name": "Create an activity1",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "note",
+        "content": "={{ $('Message a model1').item.json.message.content.description }}\n\nAllabolag:\n{{ $('Regex2').item.json.allabolagUrl }}",
+        "additionalFields": {
+          "deal_id": "={{ $('Create a deal1').item.json.id }}",
+          "org_id": "={{ $('Create an organization1').item.json.id }}",
+          "person_id": "={{ $('Update a person').item.json.id }}"
+        }
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        2768,
+        -2192
+      ],
+      "id": "02b5f434-7183-4920-812f-683b78a9c419",
+      "name": "Create a note1",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.statusCode }}",
+                    "rightValue": 200,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    },
+                    "id": "c2f7ac37-810d-43dc-a887-0d0c476d252d"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "40f62768-7bac-423e-b8cc-ad8fddc75742",
+                    "leftValue": "={{ $json.statusCode }}",
+                    "rightValue": 400,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        848,
+        -2096
+      ],
+      "id": "82890b1d-1434-4f39-b18f-1d47d0de45c5",
+      "name": "Website Exist?1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1️⃣ Get HTML data from the previous node\nlet html = $json.data || \"\";\n\n// 2️⃣ Extract page title\nconst titleMatch = html.match(/<title>(.*?)<\\/title>/i);\n\n// 3️⃣ Remove <script> and <style> blocks\nhtml = html\n  .replace(/<script[\\s\\S]*?<\\/script>/gi, \" \")\n  .replace(/<style[\\s\\S]*?<\\/style>/gi, \" \");\n\n// 4️⃣ Strip all remaining HTML tags\nlet text = html.replace(/<[^>]+>/g, \" \");\n\n// 5️⃣ Decode common HTML entities\ntext = text\n  .replace(/&amp;/g, \"&\")\n  .replace(/&quot;/g, '\"')\n  .replace(/&#39;/g, \"'\")\n  .replace(/&lt;/g, \"<\")\n  .replace(/&gt;/g, \">\");\n\n// 6️⃣ Remove cookie / footer / navigation / legal noise\ntext = text.replace(\n  /(cookie|integritetspolicy|användarvillkor|consent|preferences|reject|accept|privacy policy|thank you! your submission|oops! something went wrong|manage by category|analytics measures usage)/gi,\n  \" \"\n);\ntext = text.replace(/\\b(Hem|Om oss|Tjänster|Blogg|Kontakta oss|FAQ|Sidor|English|Svenska|Företaget|Sitemap)\\b/gi, \" \");\n\n// 7️⃣ Collapse whitespace\ntext = text.replace(/\\s+/g, \" \").trim();\n\n// 8️⃣ Optionally cut off anything after © (usually footer)\nconst cutoff = text.indexOf(\"©\");\nif (cutoff > 0) text = text.slice(0, cutoff).trim();\n\n// 9️⃣ Return clean text + title only\nreturn [\n  {\n    title: titleMatch ? titleMatch[1] : null,\n    cleanText: text\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1072,
+        -2192
+      ],
+      "id": "14aa78e0-5f6e-4736-b83e-16b43e4a8a7e",
+      "name": "Trim HTML1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract start time from the \"Status\" node\nconst startTime = $('Status').item.json.body.payload.startTime;\n\n// Optionally extract or define end time\nconst endTime = $('Status').item.json.body.payload.endTime;\n\n// Parse dates\nconst startUTC = new Date(startTime);\nconst endUTC = endTime ? new Date(endTime) : new Date(startUTC.getTime() + 30 * 60 * 1000); // default 30 min if missing\n\n// Adjust to local timezone automatically\n// (Handles CET/CEST daylight saving)\nconst localOffset = startUTC.getTimezoneOffset() * 60 * 1000;\nconst startLocal = new Date(startUTC.getTime() - localOffset);\nconst endLocal = new Date(endUTC.getTime() - localOffset);\n\n// Calculate duration in milliseconds\nconst durationMs = endLocal - startLocal;\n\n// Convert to hours, minutes, seconds\nconst hours = String(Math.floor(durationMs / 1000 / 60 / 60)).padStart(2, '0');\nconst minutes = String(Math.floor((durationMs / 1000 / 60) % 60)).padStart(2, '0');\nconst seconds = '00';\n\n// Format output\nconst due_date = startLocal.toISOString().slice(0, 10);   // YYYY-MM-DD\nconst due_time = startLocal.toISOString().slice(11, 19);  // HH:mm:ss\nconst duration = `${hours}:${minutes}:${seconds}`;        // HH:mm:ss\n\n// Return in a clean JSON object\nreturn [{ due_date, due_time, duration }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2320,
+        -2192
+      ],
+      "id": "5442178f-0bd7-4be5-84c8-b3d0fe6c97f4",
+      "name": "Parse Timestamp3"
+    },
+    {
+      "parameters": {
+        "resource": "organization",
+        "name": "={{ $('Status').item.json.body.payload.responses.companyName.value }}",
+        "additionalFields": {
+          "customProperties": {
+            "property": [
+              {
+                "name": "website",
+                "value": "={{ $('Regex2').item.json.domain }}"
+              },
+              {
+                "name": "add_time",
+                "value": "={{ $now }}"
+              }
+            ]
+          },
+          "label": 11
+        }
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        1072,
+        -2000
+      ],
+      "id": "e755546f-1e19-4bd9-95bb-72482a5030d2",
+      "name": "Create an organization3",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "title": "Conversion BluePrint",
+        "associateWith": "=organization",
+        "org_id": "={{ $('Create an organization3').item.json.id }}",
+        "additionalFields": {
+          "person_id": "={{ $json.id }}",
+          "stage_id": 6,
+          "status": "open",
+          "visible_to": "3"
+        }
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        1648,
+        -2000
+      ],
+      "id": "b112211c-b62c-4971-b19f-8c15d2680b6b",
+      "name": "Create a deal3",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "activity",
+        "subject": "Discovery",
+        "type": "Meeting",
+        "additionalFields": {
+          "deal_id": "={{ $('Create a deal3').item.json.id }}",
+          "due_date": "={{ $json.due_date }}",
+          "note": "Demo Meeting Link:<br>\nhttps://cal.com/brightinteraction/demo\n<br><br>\nCalculator:<br>\nhttps://form.jotform.com/252874326301050\n<br><br>\nProposal Link:<br>\nhttps://form.jotform.com/251394424097057",
+          "org_id": "={{ $('Create an organization3').item.json.id }}",
+          "person_id": "={{ $('Update a person1').item.json.id }}",
+          "user_id": 26901915,
+          "customProperties": {
+            "property": [
+              {
+                "name": "due_time",
+                "value": "={{ $json.due_time }}"
+              },
+              {
+                "name": "duration",
+                "value": "={{ $json.duration }}"
+              },
+              {
+                "name": "conference_meeting_client",
+                "value": "google_meet"
+              },
+              {
+                "name": "conference_meeting_url",
+                "value": "={{ $('Status').item.json.body.payload.metadata.videoCallUrl }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        2096,
+        -2000
+      ],
+      "id": "a1490ebd-9711-41e3-a665-23d1787725ef",
+      "name": "Create an activity3",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract start time from the \"Status\" node\nconst startTime = $('Status').item.json.body.payload.startTime;\n\n// Optionally extract or define end time\nconst endTime = $('Status').item.json.body.payload.endTime;\n\n// Parse dates\nconst startUTC = new Date(startTime);\nconst endUTC = endTime ? new Date(endTime) : new Date(startUTC.getTime() + 30 * 60 * 1000); // default 30 min if missing\n\n// Adjust to local timezone automatically\n// (Handles CET/CEST daylight saving)\nconst localOffset = startUTC.getTimezoneOffset() * 60 * 1000;\nconst startLocal = new Date(startUTC.getTime() - localOffset);\nconst endLocal = new Date(endUTC.getTime() - localOffset);\n\n// Calculate duration in milliseconds\nconst durationMs = endLocal - startLocal;\n\n// Convert to hours, minutes, seconds\nconst hours = String(Math.floor(durationMs / 1000 / 60 / 60)).padStart(2, '0');\nconst minutes = String(Math.floor((durationMs / 1000 / 60) % 60)).padStart(2, '0');\nconst seconds = '00';\n\n// Format output\nconst due_date = startLocal.toISOString().slice(0, 10);   // YYYY-MM-DD\nconst due_time = startLocal.toISOString().slice(11, 19);  // HH:mm:ss\nconst duration = `${hours}:${minutes}:${seconds}`;        // HH:mm:ss\n\n// Return in a clean JSON object\nreturn [{ due_date, due_time, duration }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1872,
+        -2000
+      ],
+      "id": "b268c3eb-9782-42ab-be9c-c6e8a952505d",
+      "name": "Parse Timestamp4"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1️⃣ Access Cal.com webhook structure correctly\nconst data = $node[\"Status\"].json.body.payload.responses;\n\n// 2️⃣ Extract company name and email\nconst companyName = data.companyName?.value || null;\nconst email = data.email?.value || null;\n\n// 3️⃣ Extract domain from email\nlet domain = null;\nif (email) {\n  const match = email.match(/@(.+)/);\n  domain = match ? match[1] : null;\n}\n\n// 4️⃣ Build the website URL\nconst website = domain ? `https://${domain}` : null;\n\n// 5️⃣ Build the Allabolag search URL (encode spaces safely)\nconst allabolagUrl = companyName\n  ? `https://www.allabolag.se/bransch-s%C3%B6k?q=${encodeURIComponent(companyName)}`\n  : null;\n\n// 6️⃣ Return trimmed data\nreturn [\n  {\n    domain: domain,\n    website,\n    allabolagUrl\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        -2096
+      ],
+      "id": "7f3e9360-7d11-487c-867e-91c76a9888b6",
+      "name": "Regex2"
+    },
+    {
+      "parameters": {
+        "resource": "person",
+        "operation": "update",
+        "personId": "={{ $('Search a person4').item.json.id }}",
+        "updateFields": {
+          "label": 15,
+          "org_id": "={{ $json.id }}",
+          "phone": [
+            "={{ $('Status').item.json.body.payload.responses.smsReminderNumber.value }}"
+          ],
+          "visible_to": "3"
+        }
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        -2000
+      ],
+      "id": "61318c9f-17b6-4cbf-b371-7e8e0111708e",
+      "name": "Update a person1",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C086UB5G5MK",
+          "mode": "list",
+          "cachedResultName": "leads"
+        },
+        "messageType": "block",
+        "blocksUi": "={\n\t\"blocks\": [\n\t\t{\n\t\t\t\"type\": \"section\",\n\t\t\t\"text\": {\n\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\"text\": \"New Lead:\\n*<https://brightinteraction.pipedrive.com/organization/{{ $('Create an organization3').first().json.id }}|{{ $('Status').first().json.body.payload.responses.name.value }}>*\"\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"type\": \"section\",\n\t\t\t\"fields\": [\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\t\"text\": \"*Company:*\\n<{{ $('Regex2').first().json.allabolagUrl }}|{{ $('Status').first().json.body.payload.responses.companyName.value }}>\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\t\"text\": \"*When:*\\n{{ $('Parse Timestamp4').first().json.due_date }} {{ $('Parse Timestamp4').first().json.due_time.slice(0, 5) }}\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\t\"text\": \"*Email:*\\n{{ $('Status').first().json.body.payload.responses.email.value }}\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\t\"text\": \"*Phone:*\\n{{ $('Webhook').first().json.body.payload.responses.smsReminderNumber.value }}\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\t\"text\": \"*Website:*\\n{{ $('Regex2').first().json.website }}\"\n\t\t\t\t}\n\t\t\t]\n\t\t},\n\t\t{\n\t\t\t\"type\": \"divider\"\n\t\t},\n\t\t{\n\t\t\t\"type\": \"section\",\n\t\t\t\"text\": {\n\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\"text\": \"*Additional notes:*\\n{{ $('Status').first().json.body.payload.responses.notes.value }}\"\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"type\": \"actions\",\n\t\t\t\"elements\": [\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"button\",\n\t\t\t\t\t\"text\": {\n\t\t\t\t\t\t\"type\": \"plain_text\",\n\t\t\t\t\t\t\"emoji\": true,\n\t\t\t\t\t\t\"text\": \"Approve\"\n\t\t\t\t\t},\n\t\t\t\t\t\"style\": \"primary\",\n\t\t\t\t\t\"value\": \"Qualified\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"button\",\n\t\t\t\t\t\"text\": {\n\t\t\t\t\t\t\"type\": \"plain_text\",\n\t\t\t\t\t\t\"emoji\": true,\n\t\t\t\t\t\t\"text\": \"Deny\"\n\t\t\t\t\t},\n\t\t\t\t\t\"style\": \"danger\",\n\t\t\t\t\t\"value\": \"Unqualified\"\n\t\t\t\t}\n\t\t\t]\n\t\t}\n\t]\n}",
+        "otherOptions": {
+          "unfurl_links": true
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        2320,
+        -2000
+      ],
+      "id": "c1cbcfd7-2c01-42fc-8e1c-badcbfdfa4d5",
+      "name": "Notification in Lead Channel2",
+      "webhookId": "c2609ac9-71ab-4e26-a03b-12132d15e94b",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "si4axd1ESHjcPLbx",
+          "name": "Jeeves"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C086UB5G5MK",
+          "mode": "list",
+          "cachedResultName": "leads"
+        },
+        "messageType": "block",
+        "blocksUi": "={\n\t\"blocks\": [\n\t\t{\n\t\t\t\"type\": \"section\",\n\t\t\t\"text\": {\n\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\"text\": \"New Lead:\\n*<https://brightinteraction.pipedrive.com/organization/{{ $('Create an organization').first().json.id }}|{{ $('Status').first().json.body.payload.responses.name.value }}>*\"\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"type\": \"section\",\n\t\t\t\"fields\": [\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\t\"text\": \"*Company:*\\n<{{ $('Regex').first().json.allabolagUrl }}|{{ $('Status').first().json.body.payload.responses.companyName.value }}>\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\t\"text\": \"*When:*\\n{{ $('Parse Timestamp').first().json.due_date }} {{ $('Parse Timestamp').first().json.due_time.slice(0, 5) }}\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\t\"text\": \"*Email:*\\n{{ $('Status').first().json.body.payload.responses.email.value }}\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\t\"text\": \"*Phone:*\\n{{ $('Webhook').first().json.body.payload.responses.smsReminderNumber.value }}\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\t\"text\": \"*Website:*\\n{{ $('Regex').first().json.website }}\"\n\t\t\t\t}\n\t\t\t]\n\t\t},\n\t\t{\n\t\t\t\"type\": \"divider\"\n\t\t},\n\t\t{\n\t\t\t\"type\": \"section\",\n\t\t\t\"text\": {\n\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\"text\": \"*Additional notes:*\\n{{ $('Status').first().json.body.payload.responses.notes.value }}\"\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"type\": \"actions\",\n\t\t\t\"elements\": [\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"button\",\n\t\t\t\t\t\"text\": {\n\t\t\t\t\t\t\"type\": \"plain_text\",\n\t\t\t\t\t\t\"emoji\": true,\n\t\t\t\t\t\t\"text\": \"Approve\"\n\t\t\t\t\t},\n\t\t\t\t\t\"style\": \"primary\",\n\t\t\t\t\t\"value\": \"Qualified\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"button\",\n\t\t\t\t\t\"text\": {\n\t\t\t\t\t\t\"type\": \"plain_text\",\n\t\t\t\t\t\t\"emoji\": true,\n\t\t\t\t\t\t\"text\": \"Deny\"\n\t\t\t\t\t},\n\t\t\t\t\t\"style\": \"danger\",\n\t\t\t\t\t\"value\": \"Unqualified\"\n\t\t\t\t}\n\t\t\t]\n\t\t}\n\t]\n}",
+        "otherOptions": {
+          "unfurl_links": false,
+          "unfurl_media": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        3280,
+        -1392
+      ],
+      "id": "ca2c6469-0bab-4452-831d-44d717875a82",
+      "name": "Notification in Lead Channel3",
+      "webhookId": "c2609ac9-71ab-4e26-a03b-12132d15e94b",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "si4axd1ESHjcPLbx",
+          "name": "Jeeves"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C086UB5G5MK",
+          "mode": "list",
+          "cachedResultName": "leads"
+        },
+        "messageType": "block",
+        "blocksUi": "={\n\t\"blocks\": [\n\t\t{\n\t\t\t\"type\": \"section\",\n\t\t\t\"text\": {\n\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\"text\": \"New Lead:\\n*<https://brightinteraction.pipedrive.com/organization/{{ $('Create an organization2').first().json.id }}|{{ $('Status').first().json.body.payload.responses.name.value }}>*\"\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"type\": \"section\",\n\t\t\t\"fields\": [\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\t\"text\": \"*Company:*\\n<{{ $('Regex').first().json.allabolagUrl }}|{{ $('Status').first().json.body.payload.responses.companyName.value }}>\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\t\"text\": \"*When:*\\n{{ $('Parse Timestamp1').first().json.due_date }} {{ $('Parse Timestamp1').first().json.due_time.slice(0, 5) }}\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\t\"text\": \"*Email:*\\n{{ $('Status').first().json.body.payload.responses.email.value }}\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\t\"text\": \"*Phone:*\\n{{ $('Webhook').first().json.body.payload.responses.smsReminderNumber.value }}\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\t\"text\": \"*Website:*\\n{{ $('Regex').first().json.website }}\"\n\t\t\t\t}\n\t\t\t]\n\t\t},\n\t\t{\n\t\t\t\"type\": \"divider\"\n\t\t},\n\t\t{\n\t\t\t\"type\": \"section\",\n\t\t\t\"text\": {\n\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\"text\": \"*Additional notes:*\\n{{ $('Status').first().json.body.payload.responses.notes.value }}\"\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"type\": \"actions\",\n\t\t\t\"elements\": [\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"button\",\n\t\t\t\t\t\"text\": {\n\t\t\t\t\t\t\"type\": \"plain_text\",\n\t\t\t\t\t\t\"emoji\": true,\n\t\t\t\t\t\t\"text\": \"Approve\"\n\t\t\t\t\t},\n\t\t\t\t\t\"style\": \"primary\",\n\t\t\t\t\t\"value\": \"Qualified\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"button\",\n\t\t\t\t\t\"text\": {\n\t\t\t\t\t\t\"type\": \"plain_text\",\n\t\t\t\t\t\t\"emoji\": true,\n\t\t\t\t\t\t\"text\": \"Deny\"\n\t\t\t\t\t},\n\t\t\t\t\t\"style\": \"danger\",\n\t\t\t\t\t\"value\": \"Unqualified\"\n\t\t\t\t}\n\t\t\t]\n\t\t}\n\t]\n}",
+        "otherOptions": {
+          "unfurl_links": false,
+          "unfurl_media": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        2384,
+        -1200
+      ],
+      "id": "c3eb2514-2730-4a94-9e17-6690c081f25b",
+      "name": "Notification in Lead Channel",
+      "webhookId": "c2609ac9-71ab-4e26-a03b-12132d15e94b",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "si4axd1ESHjcPLbx",
+          "name": "Jeeves"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "tagSubscriber",
+        "operation": "add",
+        "tagId": 11594208,
+        "email": "={{ $('Status').item.json.body.payload.responses.email.value }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.convertKit",
+      "typeVersion": 1,
+      "position": [
+        2544,
+        -2000
+      ],
+      "id": "91962a3c-7232-45a5-9342-b5e37911d0c8",
+      "name": "Tag1",
+      "credentials": {
+        "convertKitApi": {
+          "id": "pR1lzmaOf7EAOkJH",
+          "name": "ConvertKit"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "tagSubscriber",
+        "operation": "add",
+        "tagId": 11594208,
+        "email": "={{ $('Status').item.json.body.payload.responses.email.value }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.convertKit",
+      "typeVersion": 1,
+      "position": [
+        3216,
+        -2192
+      ],
+      "id": "6d42c26f-2204-40bc-9c56-9a2036d3dafd",
+      "name": "Tag",
+      "credentials": {
+        "convertKitApi": {
+          "id": "pR1lzmaOf7EAOkJH",
+          "name": "ConvertKit"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "activity",
+        "operation": "delete",
+        "activityId": "={{ $json.id }}"
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        1936,
+        -816
+      ],
+      "id": "348ecd47-54dd-4504-bfdb-1405099a12e9",
+      "name": "Delete an activity",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "term": "={{ $json.organization.name }}",
+        "additionalFields": {
+          "includeFields": "="
+        }
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        -816
+      ],
+      "id": "20ac88f5-e76e-4b92-aa66-bba43e41e318",
+      "name": "Search a deal1",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "dealActivity",
+        "dealId": "={{ $json.id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        1648,
+        -816
+      ],
+      "id": "02b82e73-82bb-4c65-b64a-2293ff74ffb6",
+      "name": "Get many deal activities",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "person",
+        "operation": "search",
+        "limit": 1,
+        "term": "={{ $('Webhook').first().json.body.payload.responses.email.value }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        1136,
+        -624
+      ],
+      "id": "42ec7fc0-973e-4e51-8d27-bffe1c970116",
+      "name": "Search a person2",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "person",
+        "operation": "search",
+        "limit": 1,
+        "term": "={{ $('Webhook').first().json.body.payload.responses.email.value }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        1136,
+        -432
+      ],
+      "id": "dbbbda25-936d-4862-bf72-f77660ece375",
+      "name": "Search a person3",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "term": "={{ $json.organization.name }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        -432
+      ],
+      "id": "1d64adfb-c7f6-4175-b8b9-108d2cfe48f0",
+      "name": "Search a deal2",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "dealActivity",
+        "dealId": "={{ $json.id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        1648,
+        -432
+      ],
+      "id": "1f38f7fa-f467-4f0a-8600-29b878bdb369",
+      "name": "Get many deal activities1",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "automation.brightinteraction.com",
+            "user-agent": "node",
+            "content-length": "3320",
+            "accept": "*/*",
+            "accept-encoding": "br, gzip, deflate",
+            "accept-language": "*",
+            "baggage": "sentry-environment=vercel-production,sentry-public_key=7fa2ea46dede9404597bde582525baca,sentry-trace_id=3954110a35df4ffd98cceb812c45a4f9,sentry-sampled=false,sentry-sample_rand=0.7592150236641746,sentry-sample_rate=0",
+            "content-type": "application/json",
+            "sec-fetch-mode": "cors",
+            "sentry-trace": "3954110a35df4ffd98cceb812c45a4f9-2633369b4d222e42-0",
+            "via": "1.1 Caddy",
+            "x-cal-signature-256": "no-secret-provided",
+            "x-forwarded-for": "3.140.184.189",
+            "x-forwarded-host": "automation.brightinteraction.com",
+            "x-forwarded-proto": "https",
+            "x-vercel-id": "lhr1:lhr1::jntfh-1762285618033-aab07d8cda1a"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "triggerEvent": "BOOKING_CREATED",
+            "createdAt": "2025-11-04T19:47:00.881Z",
+            "payload": {
+              "bookerUrl": "https://cal.com",
+              "title": "Discovery Call - Bright Interaction & Zapyan",
+              "startTime": "2025-11-07T14:30:00Z",
+              "endTime": "2025-11-07T15:00:00Z",
+              "additionalNotes": "",
+              "type": "discovery-eu",
+              "description": "If we're fully booked, please bookmark and try again next week. Apologies for any inconvenience!",
+              "eventTypeId": 1563044,
+              "hideCalendarNotes": false,
+              "hideCalendarEventDetails": false,
+              "hideOrganizerEmail": false,
+              "schedulingType": null,
+              "seatsPerTimeSlot": null,
+              "seatsShowAttendees": true,
+              "seatsShowAvailabilityCount": true,
+              "customReplyToEmail": null,
+              "disableRescheduling": false,
+              "disableCancelling": false,
+              "organizer": {
+                "id": 1293151,
+                "name": "Tom Isgren",
+                "email": "tom@brightinteraction.com",
+                "username": "brightinteraction",
+                "timeZone": "Europe/Stockholm",
+                "language": {
+                  "locale": "en"
+                },
+                "timeFormat": "HH:mm",
+                "utcOffset": 60
+              },
+              "attendees": [
+                {
+                  "email": "jawad@zapyan.com",
+                  "name": "Jawad wisal",
+                  "firstName": "",
+                  "lastName": "",
+                  "timeZone": "Europe/London",
+                  "language": {
+                    "locale": "en"
+                  },
+                  "utcOffset": 0
+                }
+              ],
+              "customInputs": {},
+              "responses": {
+                "attendeePhoneNumber": {
+                  "label": "phone_number",
+                  "isHidden": true
+                },
+                "name": {
+                  "label": "your_name",
+                  "value": "Jawad wisal",
+                  "isHidden": false
+                },
+                "companyName": {
+                  "label": "Company Name",
+                  "value": "Zapyan",
+                  "isHidden": false
+                },
+                "email": {
+                  "label": "email_address",
+                  "value": "jawad@zapyan.com",
+                  "isHidden": false
+                },
+                "location": {
+                  "label": "location",
+                  "value": {
+                    "value": "integrations:google:meet",
+                    "optionValue": ""
+                  },
+                  "isHidden": false
+                },
+                "title": {
+                  "label": "what_is_this_meeting_about",
+                  "isHidden": true
+                },
+                "notes": {
+                  "label": "Additional notes",
+                  "isHidden": false
+                },
+                "guests": {
+                  "label": "additional_guests",
+                  "value": [],
+                  "isHidden": false
+                },
+                "rescheduleReason": {
+                  "label": "reason_for_reschedule",
+                  "isHidden": false
+                },
+                "confirmation": {
+                  "label": "Booked and confirmed — I’ll show up on time.",
+                  "value": true,
+                  "isHidden": false
+                },
+                "smsReminderNumber": {
+                  "label": "number_text_notifications",
+                  "value": "+447886793742",
+                  "isHidden": false
+                }
+              },
+              "userFieldsResponses": {
+                "companyName": {
+                  "label": "Company Name",
+                  "value": "Zapyan",
+                  "isHidden": false
+                },
+                "confirmation": {
+                  "label": "Booked and confirmed — I’ll show up on time.",
+                  "value": true,
+                  "isHidden": false
+                }
+              },
+              "location": "integrations:google:meet",
+              "conferenceCredentialId": 673548,
+              "destinationCalendar": [
+                {
+                  "id": 413104,
+                  "integration": "google_calendar",
+                  "externalId": "tom@brightinteraction.com",
+                  "primaryEmail": "tom@brightinteraction.com",
+                  "userId": 1293151,
+                  "eventTypeId": null,
+                  "credentialId": 673547,
+                  "createdAt": "2025-07-07T10:50:48.811Z",
+                  "updatedAt": null,
+                  "delegationCredentialId": null,
+                  "domainWideDelegationCredentialId": null
+                }
+              ],
+              "iCalUID": "8tKF6C7HiqXV6xLSNVccXw@Cal.com",
+              "iCalSequence": 0,
+              "requiresConfirmation": false,
+              "oneTimePassword": null,
+              "uid": "8tKF6C7HiqXV6xLSNVccXw",
+              "conferenceData": {
+                "createRequest": {
+                  "requestId": "8a0ce172-f69a-51b5-8481-93feb73d58e2"
+                }
+              },
+              "appsStatus": [
+                {
+                  "appName": "google-calendar",
+                  "type": "google_calendar",
+                  "success": 1,
+                  "failures": 0,
+                  "errors": [],
+                  "warnings": []
+                },
+                {
+                  "appName": "Google Meet",
+                  "type": "conferencing",
+                  "success": 1,
+                  "failures": 0,
+                  "errors": []
+                }
+              ],
+              "eventTitle": "Discovery Call ",
+              "eventDescription": "If we're fully booked, please bookmark and try again next week. Apologies for any inconvenience!",
+              "price": 0,
+              "currency": "usd",
+              "length": 30,
+              "bookingId": 12435805,
+              "metadata": {
+                "videoCallUrl": "https://meet.google.com/atw-txzr-nqa"
+              },
+              "status": "ACCEPTED",
+              "smsReminderNumber": "+447886793742"
+            }
+          },
+          "webhookUrl": "https://automation.brightinteraction.com/webhook/a736f17d-4d35-4cb3-9b44-e48877120d85",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Regex": {
+      "main": [
+        [
+          {
+            "node": "Website Exist?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Website": {
+      "main": [
+        [
+          {
+            "node": "Trim HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Create an organization",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an organization": {
+      "main": [
+        [
+          {
+            "node": "Create a person",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a person": {
+      "main": [
+        [
+          {
+            "node": "Create a deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a deal": {
+      "main": [
+        [
+          {
+            "node": "Parse Timestamp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an activity": {
+      "main": [
+        [
+          {
+            "node": "Create a note",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a note": {
+      "main": [
+        [
+          {
+            "node": "Notification in Lead Channel3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Status": {
+      "main": [
+        [
+          {
+            "node": "Regex",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Website Exist?": {
+      "main": [
+        [
+          {
+            "node": "Check Website",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create an organization2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trim HTML": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Timestamp": {
+      "main": [
+        [
+          {
+            "node": "Create an activity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an organization2": {
+      "main": [
+        [
+          {
+            "node": "Create a person2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a person2": {
+      "main": [
+        [
+          {
+            "node": "Create a deal2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a deal2": {
+      "main": [
+        [
+          {
+            "node": "Parse Timestamp1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Timestamp1": {
+      "main": [
+        [
+          {
+            "node": "Create an activity2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "No-Show Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Rescheduled Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "Rejected Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait3": {
+      "main": [
+        [
+          {
+            "node": "Canceled Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Canceled Email": {
+      "main": [
+        [
+          {
+            "node": "Search a person",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rejected Email": {
+      "main": [
+        [
+          {
+            "node": "Search a person1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rescheduled Email": {
+      "main": [
+        [
+          {
+            "node": "Search a person3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No-Show Email": {
+      "main": [
+        [
+          {
+            "node": "Search a person2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an activity2": {
+      "main": [
+        [
+          {
+            "node": "Notification in Lead Channel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search a person": {
+      "main": [
+        [
+          {
+            "node": "Search a deal1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search a person1": {
+      "main": [
+        [
+          {
+            "node": "Search a deal1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search a person4": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Regex2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Parse Timestamp2": {
+      "main": [
+        [
+          {
+            "node": "Update an activity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a person": {
+      "main": [
+        [
+          {
+            "node": "Create a deal1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Website1": {
+      "main": [
+        [
+          {
+            "node": "Website Exist?1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "Create an organization1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an organization1": {
+      "main": [
+        [
+          {
+            "node": "Update a person",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a deal1": {
+      "main": [
+        [
+          {
+            "node": "Parse Timestamp3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an activity1": {
+      "main": [
+        [
+          {
+            "node": "Create a note1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a note1": {
+      "main": [
+        [
+          {
+            "node": "Notification in Lead Channel1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Website Exist?1": {
+      "main": [
+        [
+          {
+            "node": "Trim HTML1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create an organization3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trim HTML1": {
+      "main": [
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Timestamp3": {
+      "main": [
+        [
+          {
+            "node": "Create an activity1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an organization3": {
+      "main": [
+        [
+          {
+            "node": "Update a person1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a deal3": {
+      "main": [
+        [
+          {
+            "node": "Parse Timestamp4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an activity3": {
+      "main": [
+        [
+          {
+            "node": "Notification in Lead Channel2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Timestamp4": {
+      "main": [
+        [
+          {
+            "node": "Create an activity3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Regex2": {
+      "main": [
+        [
+          {
+            "node": "Check Website1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a person1": {
+      "main": [
+        [
+          {
+            "node": "Create a deal3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notification in Lead Channel1": {
+      "main": [
+        [
+          {
+            "node": "Tag",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notification in Lead Channel2": {
+      "main": [
+        [
+          {
+            "node": "Tag1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search a deal1": {
+      "main": [
+        [
+          {
+            "node": "Get many deal activities",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many deal activities": {
+      "main": [
+        [
+          {
+            "node": "Delete an activity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search a person2": {
+      "main": [
+        [
+          {
+            "node": "Search a deal1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search a person3": {
+      "main": [
+        [
+          {
+            "node": "Search a deal2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search a deal2": {
+      "main": [
+        [
+          {
+            "node": "Get many deal activities1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many deal activities1": {
+      "main": [
+        [
+          {
+            "node": "Parse Timestamp2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "executionTimeout": 900,
+    "availableInMCP": false,
+    "errorWorkflow": "99pWK0AunU67VVFb",
+    "timeSavedPerExecution": 30
+  },
+  "versionId": "7941f66f-a230-4690-97bc-0c73cfd6e5e6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5b8ab9d7e4dd624ba91ae314ab653cf7e358ae6ce45ce99a096773e83e26d085"
+  },
+  "id": "58ZbId0651quN6b1",
+  "tags": [
+    {
+      "createdAt": "2025-10-22T21:58:32.807Z",
+      "updatedAt": "2025-10-22T21:58:32.807Z",
+      "id": "EZ2x2iSdkuYpVnTs",
+      "name": "CRM"
+    },
+    {
+      "createdAt": "2025-10-22T21:58:10.460Z",
+      "updatedAt": "2025-10-22T21:58:10.460Z",
+      "id": "J26baZIfOPS5yFo3",
+      "name": "Sales"
+    }
+  ]
+}
