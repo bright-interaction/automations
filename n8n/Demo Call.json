@@ -1,0 +1,954 @@
+{
+  "name": "Demo Call",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "update",
+        "dealId": "={{ $json.id }}",
+        "updateFields": {
+          "stage_id": 7,
+          "visible_to": "3"
+        }
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        992,
+        -16
+      ],
+      "id": "ba3547c0-7166-4a31-846a-10c6b4730aac",
+      "name": "Update a deal",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.triggerEvent }}",
+                    "rightValue": "BOOKING_CREATED",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "4dca1286-0951-4f96-9312-be9224878579"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Created"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "ead31ed0-954b-4a0c-add7-28ee1a557a62",
+                    "leftValue": "={{ $json.body.triggerEvent }}",
+                    "rightValue": "BOOKING_CANCELLED",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Cancelled"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "349554ce-036a-4597-8d41-a17dac4d32d4",
+                    "leftValue": "={{ $json.body.triggerEvent }}",
+                    "rightValue": "BOOKING_REJECTED",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Rejected"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "43cf7327-870c-4de7-8e8c-e5681a56ccd0",
+                    "leftValue": "={{ $json.body.triggerEvent }}",
+                    "rightValue": "BOOKING_NO",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "No Show"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "917d5975-9667-45bf-a706-7214b46bfd3d",
+                    "leftValue": "={{ $json.body.triggerEvent }}",
+                    "rightValue": "BOOKING_RESCHEDULED",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Rescheduled"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        320,
+        320
+      ],
+      "id": "526ea86a-0294-4a5d-893c-48b49021256c",
+      "name": "Status"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract start time from the \"Status\" node\nconst startTime = $('Status').item.json.body.payload.startTime;\n\n// Optionally extract or define end time\nconst endTime = $('Status').item.json.body.payload.endTime;\n\n// Parse dates\nconst startUTC = new Date(startTime);\nconst endUTC = endTime ? new Date(endTime) : new Date(startUTC.getTime() + 30 * 60 * 1000); // default 30 min if missing\n\n// Adjust to local timezone automatically\n// (Handles CET/CEST daylight saving)\nconst localOffset = startUTC.getTimezoneOffset() * 60 * 1000;\nconst startLocal = new Date(startUTC.getTime() - localOffset);\nconst endLocal = new Date(endUTC.getTime() - localOffset);\n\n// Calculate duration in milliseconds\nconst durationMs = endLocal - startLocal;\n\n// Convert to hours, minutes, seconds\nconst hours = String(Math.floor(durationMs / 1000 / 60 / 60)).padStart(2, '0');\nconst minutes = String(Math.floor((durationMs / 1000 / 60) % 60)).padStart(2, '0');\nconst seconds = '00';\n\n// Format output\nconst due_date = startLocal.toISOString().slice(0, 10);   // YYYY-MM-DD\nconst due_time = startLocal.toISOString().slice(11, 19);  // HH:mm:ss\nconst duration = `${hours}:${minutes}:${seconds}`;        // HH:mm:ss\n\n// Return in a clean JSON object\nreturn [{ due_date, due_time, duration }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1216,
+        -16
+      ],
+      "id": "612837e9-fe68-44a0-b32a-3f4724d57eac",
+      "name": "Parse Timestamp"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.payload.attendees[0].email }}",
+        "subject": "=No problem, let’s find a better time",
+        "message": "=Hey {{ $json.body.payload.responses.name.value.split(\" \")[0] }},\n\nThanks for letting me know. Totally understand things come up.\n<br><br>\nLet’s lock in a time that suits you better. This’ll be a quick run-through of how we remove all the manual work from sales and onboarding within 30 days or less, freeing your team to focus on closing more deals.\n<br><br>\nYou can grab a <a href=\"https://brightinteraction.com\" style=\"color:#000000;text-decoration:none;\">new slot here.</a>\n<br><br>\nOr just reply with a day that works best.\n<br><br>\nBest,<br>\nTom\n<br><br>\n<table style=\"font-family:'Poppins','Nunito',sans-serif;color:#000000;background-color:#ffffff;padding:10px 0;border-collapse:collapse;width:100%;max-width:600px;\">\n  <tr>\n    <td style=\"vertical-align:middle;padding-right:15px;width:120px;\">\n      <div style=\"background-color:#ffffff;padding:5px;border-radius:4px;display:inline-block;vertical-align:middle;\">\n        <img src=\"https://cdn.prod.website-files.com/6830c8a9084bf2aafa8157f6/68f577015ea873d2f3d07978_Logo%20Email%20Footer.png\"\n             alt=\"Bright Interaction Logo\"\n             width=\"120\"\n             style=\"display:block;max-width:120px;height:auto;\">\n      </div>\n    </td>\n    <td style=\"vertical-align:middle;padding-left:10px;\">\n      <div style=\"font-weight:600;font-size:16px;\">Tom Isgren</div>\n      <div style=\"font-size:14px;color:#555;\">Founder @ Bright Interaction</div>\n      <div style=\"font-size:14px;margin-top:6px;\">\n        <a href=\"mailto:tom@brightinteraction.com\" style=\"color:#1a73e8;text-decoration:none;\">tom@brightinteraction.com</a>\n      </div>\n      <div style=\"font-size:14px;\">+46 762 978 035</div>\n      <div style=\"font-size:14px;\">\n        <a href=\"https://brightinteraction.com\" style=\"color:#000000;text-decoration:none;\">brightinteraction.com</a>\n      </div>\n      <div style=\"font-size:14px;margin-top:4px;\">\n        <a href=\"https://www.linkedin.com/in/tom-brightinteraction/\" style=\"color:#731963;text-decoration:none;\">LinkedIn</a>\n      </div>\n    </td>\n  </tr>\n  <tr>\n    <td colspan=\"2\" style=\"border-top:1px solid #f0f0f0;padding-top:8px;font-size:12px;color:#777;text-align:left;\">\n      © 2025 Bright Interaction Automation Agency. All rights reserved.\n    </td>\n  </tr>\n</table>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        768,
+        176
+      ],
+      "id": "1381cb2c-cc57-4a92-8cac-23c1b4507207",
+      "name": "Canceled Email",
+      "webhookId": "74e0c7ba-0d81-495b-ba1d-b5e8ce967ac0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N8Z7eh1G5JC1M3Qo",
+          "name": "Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.payload.attendees[0].email }}",
+        "subject": "=No worries about today, {{ $json.body.payload.responses.name.value.split(\" \") [0] }}",
+        "message": "=Hey {{ $json.body.payload.responses.name.value.split(\" \")[0] }},\n<br><br>  \nTotally understand that things can get busy. Let’s keep it simple. \n<br><br>\nWhen the timing feels right, I can walk you through how we help teams remove the manual work from their sales and onboarding within 30 days or less, so your reps can focus on closing more deals.  \n<br><br>\nWould you like me to circle back in a few weeks, or do you want to grab a new slot now while it’s top of mind?\n<br><br>\nKind regards,<br>\nTom\n<br><br>\n<table style=\"font-family:'Poppins','Nunito',sans-serif;color:#000000;background-color:#ffffff;padding:10px 0;border-collapse:collapse;width:100%;max-width:600px;\">\n  <tr>\n    <td style=\"vertical-align:middle;padding-right:15px;width:120px;\">\n      <div style=\"background-color:#ffffff;padding:5px;border-radius:4px;display:inline-block;vertical-align:middle;\">\n        <img src=\"https://cdn.prod.website-files.com/6830c8a9084bf2aafa8157f6/68f577015ea873d2f3d07978_Logo%20Email%20Footer.png\"\n             alt=\"Bright Interaction Logo\"\n             width=\"120\"\n             style=\"display:block;max-width:120px;height:auto;\">\n      </div>\n    </td>\n    <td style=\"vertical-align:middle;padding-left:10px;\">\n      <div style=\"font-weight:600;font-size:16px;\">Tom Isgren</div>\n      <div style=\"font-size:14px;color:#555;\">Founder @ Bright Interaction</div>\n      <div style=\"font-size:14px;margin-top:6px;\">\n        <a href=\"mailto:tom@brightinteraction.com\" style=\"color:#1a73e8;text-decoration:none;\">tom@brightinteraction.com</a>\n      </div>\n      <div style=\"font-size:14px;\">+46 762 978 035</div>\n      <div style=\"font-size:14px;\">\n        <a href=\"https://brightinteraction.com\" style=\"color:#000000;text-decoration:none;\">brightinteraction.com</a>\n      </div>\n      <div style=\"font-size:14px;margin-top:4px;\">\n        <a href=\"https://www.linkedin.com/in/tom-brightinteraction/\" style=\"color:#731963;text-decoration:none;\">LinkedIn</a>\n      </div>\n    </td>\n  </tr>\n  <tr>\n    <td colspan=\"2\" style=\"border-top:1px solid #f0f0f0;padding-top:8px;font-size:12px;color:#777;text-align:left;\">\n      © 2025 Bright Interaction Automation Agency. All rights reserved.\n    </td>\n  </tr>\n</table>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        768,
+        368
+      ],
+      "id": "7b08571f-65fc-446d-ab9d-bae9f780527a",
+      "name": "Rejected Email",
+      "webhookId": "74e0c7ba-0d81-495b-ba1d-b5e8ce967ac0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N8Z7eh1G5JC1M3Qo",
+          "name": "Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.payload.attendees[0].email }}",
+        "subject": "=No worries about today, {{ $json.body.payload.responses.name.value.split(\" \") [0] }}",
+        "message": "=Hey {{ $json.body.payload.responses.name.value.split(\" \")[0] }},\n<br><br>  \nThanks for rescheduling. I know things can get hectic, and I appreciate you making time. \n<br><br>\nI’ll walk you through a simple way to eliminate the manual work in your sales and onboarding — all within 30 days or less.  \n<br><br>\nIf anything changes before then, you can always adjust the time again.\n<br><br>\nLooking forward to our chat!\n<br><br>\nBest,<br>\nTom\n<br><br>\n<table style=\"font-family:'Poppins','Nunito',sans-serif;color:#000000;background-color:#ffffff;padding:10px 0;border-collapse:collapse;width:100%;max-width:600px;\">\n  <tr>\n    <td style=\"vertical-align:middle;padding-right:15px;width:120px;\">\n      <div style=\"background-color:#ffffff;padding:5px;border-radius:4px;display:inline-block;vertical-align:middle;\">\n        <img src=\"https://cdn.prod.website-files.com/6830c8a9084bf2aafa8157f6/68f577015ea873d2f3d07978_Logo%20Email%20Footer.png\"\n             alt=\"Bright Interaction Logo\"\n             width=\"120\"\n             style=\"display:block;max-width:120px;height:auto;\">\n      </div>\n    </td>\n    <td style=\"vertical-align:middle;padding-left:10px;\">\n      <div style=\"font-weight:600;font-size:16px;\">Tom Isgren</div>\n      <div style=\"font-size:14px;color:#555;\">Founder @ Bright Interaction</div>\n      <div style=\"font-size:14px;margin-top:6px;\">\n        <a href=\"mailto:tom@brightinteraction.com\" style=\"color:#1a73e8;text-decoration:none;\">tom@brightinteraction.com</a>\n      </div>\n      <div style=\"font-size:14px;\">+46 762 978 035</div>\n      <div style=\"font-size:14px;\">\n        <a href=\"https://brightinteraction.com\" style=\"color:#000000;text-decoration:none;\">brightinteraction.com</a>\n      </div>\n      <div style=\"font-size:14px;margin-top:4px;\">\n        <a href=\"https://www.linkedin.com/in/tom-brightinteraction/\" style=\"color:#731963;text-decoration:none;\">LinkedIn</a>\n      </div>\n    </td>\n  </tr>\n  <tr>\n    <td colspan=\"2\" style=\"border-top:1px solid #f0f0f0;padding-top:8px;font-size:12px;color:#777;text-align:left;\">\n      © 2025 Bright Interaction Automation Agency. All rights reserved.\n    </td>\n  </tr>\n</table>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        768,
+        752
+      ],
+      "id": "71d68d3b-1b44-48cc-b132-8d217b29abb1",
+      "name": "Rescheduled Email",
+      "webhookId": "74e0c7ba-0d81-495b-ba1d-b5e8ce967ac0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N8Z7eh1G5JC1M3Qo",
+          "name": "Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.payload.attendees[0].email }}",
+        "subject": "=No worries about today, {{ $json.body.payload.responses.name.value.split(\" \") [0] }}",
+        "message": "=Hey {{ $json.body.payload.responses.name.value.split(\" \")[0] }},\n<br><br>  \nTotally understand that things can get busy.\n<br><br>\nWhen you’re ready, I can walk you through how we help teams remove the manual work from their sales and onboarding — all within 30 days or less, so your reps can stay focused on closing more deals.  \n<br><br>\nYou can grab a new slot here if it’s easier:<br>\n\n<br><br>\nOtherwise, I’m happy to circle back in a few weeks.\n<br><br>\nCheers,<br>\nTom\n<br><br>\n<table style=\"font-family:'Poppins','Nunito',sans-serif;color:#000000;background-color:#ffffff;padding:10px 0;border-collapse:collapse;width:100%;max-width:600px;\">\n  <tr>\n    <td style=\"vertical-align:middle;padding-right:15px;width:120px;\">\n      <div style=\"background-color:#ffffff;padding:5px;border-radius:4px;display:inline-block;vertical-align:middle;\">\n        <img src=\"https://cdn.prod.website-files.com/6830c8a9084bf2aafa8157f6/68f577015ea873d2f3d07978_Logo%20Email%20Footer.png\"\n             alt=\"Bright Interaction Logo\"\n             width=\"120\"\n             style=\"display:block;max-width:120px;height:auto;\">\n      </div>\n    </td>\n    <td style=\"vertical-align:middle;padding-left:10px;\">\n      <div style=\"font-weight:600;font-size:16px;\">Tom Isgren</div>\n      <div style=\"font-size:14px;color:#555;\">Founder @ Bright Interaction</div>\n      <div style=\"font-size:14px;margin-top:6px;\">\n        <a href=\"mailto:tom@brightinteraction.com\" style=\"color:#1a73e8;text-decoration:none;\">tom@brightinteraction.com</a>\n      </div>\n      <div style=\"font-size:14px;\">+46 762 978 035</div>\n      <div style=\"font-size:14px;\">\n        <a href=\"https://brightinteraction.com\" style=\"color:#000000;text-decoration:none;\">brightinteraction.com</a>\n      </div>\n      <div style=\"font-size:14px;margin-top:4px;\">\n        <a href=\"https://www.linkedin.com/in/tom-brightinteraction/\" style=\"color:#731963;text-decoration:none;\">LinkedIn</a>\n      </div>\n    </td>\n  </tr>\n  <tr>\n    <td colspan=\"2\" style=\"border-top:1px solid #f0f0f0;padding-top:8px;font-size:12px;color:#777;text-align:left;\">\n      © 2025 Bright Interaction Automation Agency. All rights reserved.\n    </td>\n  </tr>\n</table>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        768,
+        560
+      ],
+      "id": "f0a9ce12-f962-4b06-9075-8860332f0d44",
+      "name": "No-Show Email",
+      "webhookId": "74e0c7ba-0d81-495b-ba1d-b5e8ce967ac0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N8Z7eh1G5JC1M3Qo",
+          "name": "Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 4.41,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        544,
+        176
+      ],
+      "id": "2243e222-6ae4-424e-98ba-88d81daadfe5",
+      "name": "Wait",
+      "webhookId": "f28bd89a-e24c-4ef3-891a-0b2f70be5918"
+    },
+    {
+      "parameters": {
+        "amount": 4.13,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        544,
+        368
+      ],
+      "id": "67f67c72-959a-47e3-b41e-143aad1f5dd6",
+      "name": "Wait1",
+      "webhookId": "f28bd89a-e24c-4ef3-891a-0b2f70be5918"
+    },
+    {
+      "parameters": {
+        "amount": 1.25,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        544,
+        560
+      ],
+      "id": "6423a1a8-04df-46aa-8358-f85b30d70b01",
+      "name": "Wait2",
+      "webhookId": "f28bd89a-e24c-4ef3-891a-0b2f70be5918"
+    },
+    {
+      "parameters": {
+        "amount": 9
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        544,
+        752
+      ],
+      "id": "7c979965-6c2f-4d02-be4a-b2a527f4953c",
+      "name": "Wait3",
+      "webhookId": "f28bd89a-e24c-4ef3-891a-0b2f70be5918"
+    },
+    {
+      "parameters": {
+        "resource": "person",
+        "operation": "search",
+        "limit": 1,
+        "term": "={{ $('Webhook').first().json.body.payload.responses.email.value }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        992,
+        368
+      ],
+      "id": "b2afd3f0-800b-42e4-ab6c-6f9dd0b11b36",
+      "name": "Search a person1",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "activity",
+        "operation": "delete",
+        "activityId": "={{ $json.id }}"
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        1664,
+        368
+      ],
+      "id": "5eaf579e-e770-418f-80ec-7dfc09a5be4b",
+      "name": "Delete an activity",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "person",
+        "operation": "search",
+        "limit": 2,
+        "term": "={{ $('Webhook').first().json.body.payload.responses.email.value }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        992,
+        752
+      ],
+      "id": "1bdc47e4-257d-40bb-96e5-85eba0ba9664",
+      "name": "Search a person2",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract start time from the \"Status\" node\nconst startTime = $('Status').item.json.body.payload.startTime;\n\n// Optionally extract or define end time\nconst endTime = $('Status').item.json.body.payload.endTime;\n\n// Parse dates\nconst startUTC = new Date(startTime);\nconst endUTC = endTime ? new Date(endTime) : new Date(startUTC.getTime() + 30 * 60 * 1000); // default 30 min if missing\n\n// Adjust to local timezone automatically\n// (Handles CET/CEST daylight saving)\nconst localOffset = startUTC.getTimezoneOffset() * 60 * 1000;\nconst startLocal = new Date(startUTC.getTime() - localOffset);\nconst endLocal = new Date(endUTC.getTime() - localOffset);\n\n// Calculate duration in milliseconds\nconst durationMs = endLocal - startLocal;\n\n// Convert to hours, minutes, seconds\nconst hours = String(Math.floor(durationMs / 1000 / 60 / 60)).padStart(2, '0');\nconst minutes = String(Math.floor((durationMs / 1000 / 60) % 60)).padStart(2, '0');\nconst seconds = '00';\n\n// Format output\nconst due_date = startLocal.toISOString().slice(0, 10);   // YYYY-MM-DD\nconst due_time = startLocal.toISOString().slice(11, 19);  // HH:mm:ss\nconst duration = `${hours}:${minutes}:${seconds}`;        // HH:mm:ss\n\n// Return in a clean JSON object\nreturn [{ due_date, due_time, duration }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1664,
+        752
+      ],
+      "id": "8b022c29-5104-48b6-ad01-cd864a2c664a",
+      "name": "Parse Timestamp1"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "term": "={{ $json.organization.name }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        768,
+        -16
+      ],
+      "id": "f8004bb3-70fa-4118-a9a9-fa79e31cc206",
+      "name": "Search a deal",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "person",
+        "operation": "search",
+        "term": "={{ $json.body.payload.responses.email.value }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        544,
+        -16
+      ],
+      "id": "91b0ef5f-d920-4a99-ad8a-fe9317bf4f96",
+      "name": "Search a person",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "term": "={{ $json.organization.name }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        1216,
+        752
+      ],
+      "id": "7fbd6afa-8f63-464b-9f6f-ed4108247fea",
+      "name": "Search a deal2",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "term": "={{ $json.organization.name }}",
+        "additionalFields": {
+          "includeFields": "="
+        }
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        1216,
+        368
+      ],
+      "id": "c8d11ec3-b1c9-4620-b10a-0c96e98325ea",
+      "name": "Search a deal1",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "dealActivity",
+        "dealId": "={{ $json.id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        1440,
+        368
+      ],
+      "id": "c8a5455f-ca21-4dc4-9240-00587921159e",
+      "name": "Get many deal activities",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "dealActivity",
+        "dealId": "={{ $json.id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        1440,
+        752
+      ],
+      "id": "9d0a2427-b144-4b22-a85d-e4a083b8981f",
+      "name": "Get many deal activities1",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "activity",
+        "subject": "=Demo with {{ $('Webhook').first().json.body.payload.responses.name.value.split(\" \")[0] }}",
+        "type": "Meeting",
+        "additionalFields": {
+          "deal_id": "={{ $('Search a deal').first().json.id }}",
+          "due_date": "={{ $json.due_date }}",
+          "note": "Demo Meeting Link:<br>\nhttps://cal.com/brightinteraction/demo\n<br><br>\nCalculator:<br>\nhttps://form.jotform.com/252874326301050\n<br><br>\nProposal Link:<br>\nhttps://form.jotform.com/251394424097057",
+          "org_id": "={{ $('Search a deal').first().json.organization.id }}",
+          "person_id": "={{ $('Search a deal').first().json.person.id }}",
+          "user_id": 26901915,
+          "customProperties": {
+            "property": [
+              {
+                "name": "due_time",
+                "value": "={{ $json.due_time }}"
+              },
+              {
+                "name": "duration",
+                "value": "={{ $json.duration }}"
+              },
+              {
+                "name": "conference_meeting_client",
+                "value": "google_meet"
+              },
+              {
+                "name": "conference_meeting_url",
+                "value": "={{ $('Status').first().json.body.payload.metadata.videoCallUrl }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        1440,
+        -16
+      ],
+      "id": "53a2855d-1bb5-40f6-94a0-240d1cd31fe5",
+      "name": "Create an activity",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "activity",
+        "operation": "update",
+        "activityId": "={{ $('Get many deal activities1').first().json.id }}",
+        "updateFields": {
+          "due_date": "={{ $json.due_date }}",
+          "customProperties": {
+            "property": [
+              {
+                "name": "due_time",
+                "value": "={{ $json.due_time }}"
+              },
+              {
+                "name": "duration",
+                "value": "={{ $json.duration }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        1888,
+        752
+      ],
+      "id": "c7a82bf5-2e63-48d3-a285-ea1e173ee5a4",
+      "name": "Update an activity1",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "95c58a7c-431a-40de-ab3c-4a035c1ea09a",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        112,
+        368
+      ],
+      "id": "7a057b97-da61-457a-87d8-59406a85788f",
+      "name": "Webhook",
+      "webhookId": "95c58a7c-431a-40de-ab3c-4a035c1ea09a"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Update a deal": {
+      "main": [
+        [
+          {
+            "node": "Parse Timestamp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Status": {
+      "main": [
+        [
+          {
+            "node": "Search a person",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Timestamp": {
+      "main": [
+        [
+          {
+            "node": "Create an activity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Canceled Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Rejected Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "No-Show Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rescheduled Email": {
+      "main": [
+        [
+          {
+            "node": "Search a person2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait3": {
+      "main": [
+        [
+          {
+            "node": "Rescheduled Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Canceled Email": {
+      "main": [
+        [
+          {
+            "node": "Search a person1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rejected Email": {
+      "main": [
+        [
+          {
+            "node": "Search a person1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No-Show Email": {
+      "main": [
+        [
+          {
+            "node": "Search a person1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search a person1": {
+      "main": [
+        [
+          {
+            "node": "Search a deal1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search a person2": {
+      "main": [
+        [
+          {
+            "node": "Search a deal2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Timestamp1": {
+      "main": [
+        [
+          {
+            "node": "Update an activity1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search a deal": {
+      "main": [
+        [
+          {
+            "node": "Update a deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search a person": {
+      "main": [
+        [
+          {
+            "node": "Search a deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search a deal2": {
+      "main": [
+        [
+          {
+            "node": "Get many deal activities1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search a deal1": {
+      "main": [
+        [
+          {
+            "node": "Get many deal activities",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many deal activities": {
+      "main": [
+        [
+          {
+            "node": "Delete an activity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many deal activities1": {
+      "main": [
+        [
+          {
+            "node": "Parse Timestamp1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "executionTimeout": 300,
+    "availableInMCP": false,
+    "errorWorkflow": "99pWK0AunU67VVFb",
+    "timeSavedPerExecution": 20
+  },
+  "versionId": "91bb50dd-c461-4a75-bb9f-e3146ce8c1d9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5b8ab9d7e4dd624ba91ae314ab653cf7e358ae6ce45ce99a096773e83e26d085"
+  },
+  "id": "xAQpfG0ikLJW84U1",
+  "tags": [
+    {
+      "createdAt": "2025-10-22T21:58:32.807Z",
+      "updatedAt": "2025-10-22T21:58:32.807Z",
+      "id": "EZ2x2iSdkuYpVnTs",
+      "name": "CRM"
+    },
+    {
+      "createdAt": "2025-10-22T21:58:10.460Z",
+      "updatedAt": "2025-10-22T21:58:10.460Z",
+      "id": "J26baZIfOPS5yFo3",
+      "name": "Sales"
+    }
+  ]
+}
