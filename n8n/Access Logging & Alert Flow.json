@@ -1,0 +1,281 @@
+{
+  "name": "Access Logging & Alert Flow",
+  "nodes": [
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C09PL52CW48",
+          "mode": "list",
+          "cachedResultName": "watchtower"
+        },
+        "messageType": "block",
+        "blocksUi": "={\n  \"blocks\": [\n    {\n      \"type\": \"header\",\n      \"text\": {\n        \"type\": \"plain_text\",\n        \"text\": \"🚨 Workflow Error\",\n        \"emoji\": true\n      }\n    },\n    {\n      \"type\": \"section\",\n      \"fields\": [\n        {\n          \"type\": \"mrkdwn\",\n          \"text\": \"*Workflow:*\\n{{ $json.fields['Workflow Name'] }}\"\n        },\n        {\n          \"type\": \"mrkdwn\",\n          \"text\": \"*Last Node Executed:*\\n{{ $json.fields['Last Node Executed'] }}\"\n        }\n      ]\n    },\n    {\n      \"type\": \"context\",\n      \"elements\": [\n        {\n          \"type\": \"mrkdwn\",\n          \"text\": \"⏰ {{ $json.fields.Timestamp }}\"\n        }\n      ]\n    },\n    {\n      \"type\": \"actions\",\n      \"elements\": [\n        {\n          \"type\": \"button\",\n          \"text\": {\n            \"type\": \"plain_text\",\n            \"text\": \"View Execution\",\n            \"emoji\": true\n          },\n          \"url\": \"{{ $json.fields.URL }}\",\n          \"style\": \"primary\"\n        }\n      ]\n    }\n  ]\n}",
+        "otherOptions": {
+          "includeLinkToWorkflow": false,
+          "link_names": false,
+          "unfurl_links": true,
+          "unfurl_media": true
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        560,
+        0
+      ],
+      "id": "1f1bb171-c47c-407c-b1f9-07c0ad7629d4",
+      "name": "Send a message",
+      "webhookId": "9552466e-d148-4aee-a038-51d99d03d143",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "si4axd1ESHjcPLbx",
+          "name": "Jeeves"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        0
+      ],
+      "id": "80a8ab61-8298-4cb0-b5d3-1bb9877f6345",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appY4fhIHFyL9FZ76",
+          "mode": "list",
+          "cachedResultName": "Access Log",
+          "cachedResultUrl": "https://airtable.com/appY4fhIHFyL9FZ76"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl2HMI0xHZ42rGPa",
+          "mode": "list",
+          "cachedResultName": "Table 1",
+          "cachedResultUrl": "https://airtable.com/appY4fhIHFyL9FZ76/tbl2HMI0xHZ42rGPa"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Workflow Name": "={{ $json.workflow.name }}",
+            "Workflow ID": "={{ $json.workflow.id }}",
+            "Stack": "={{ $json.execution.error.stack }}",
+            "URL": "={{ $json.execution.url }}",
+            "Last Node Executed": "={{ $json.execution.lastNodeExecuted }}",
+            "Timestamp": "={{ $json.timestamp_utc }}"
+          },
+          "matchingColumns": [
+            "Workflow Name"
+          ],
+          "schema": [
+            {
+              "id": "Workflow Name",
+              "displayName": "Workflow Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Workflow ID",
+              "displayName": "Workflow ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Last Node Executed",
+              "displayName": "Last Node Executed",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Stack",
+              "displayName": "Stack",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        352,
+        0
+      ],
+      "id": "c7ab772b-2883-4f63-8062-7709f1e23f2b",
+      "name": "Create a record",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "7qtyTPtJCCBmbLQx",
+          "name": "Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const ts = $json.timestamp;\n\n// If invalid, fallback to NOW in UTC\nconst finalTs = (!ts || isNaN(Number(ts))) ? Date.now() : Number(ts);\n\nreturn {\n  ...$json,\n  timestamp_utc: new Date(finalTs).toISOString()\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        144,
+        0
+      ],
+      "id": "ebe72071-dd34-4190-875b-44baab18915a",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {
+    "Error Trigger": [
+      {
+        "json": {
+          "execution": {
+            "id": "810",
+            "url": "https://automation.brightinteraction.com/workflow/k8FI4Uvcl8VrbORv/executions/810",
+            "error": {
+              "level": "warning",
+              "tags": {},
+              "timestamp": 1763475378916,
+              "context": {},
+              "functionality": "regular",
+              "name": "NodeOperationError",
+              "node": {
+                "parameters": {
+                  "errorType": "errorMessage",
+                  "errorMessage": "="
+                },
+                "type": "n8n-nodes-base.stopAndError",
+                "typeVersion": 1,
+                "position": [
+                  1328,
+                  -736
+                ],
+                "id": "9269f3ad-4a88-4e5e-a31c-92b8fd07fb28",
+                "name": "Stop and Error"
+              },
+              "messages": [],
+              "message": "",
+              "stack": "NodeOperationError: \n    at ExecuteContext.execute (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-nodes-base@file+packages+nodes-base_@aws-sdk+credential-providers@3.808.0_asn1.js@5_afd197edb2c1f848eae21a96a97fab23/node_modules/n8n-nodes-base/nodes/StopAndError/StopAndError.node.ts:92:9)\n    at WorkflowExecute.executeNode (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-core@file+packages+core_@opentelemetry+api@1.9.0_@opentelemetry+sdk-trace-base@1.30_08b575bec2313d5d8a4cc75358971443/node_modules/n8n-core/src/execution-engine/workflow-execute.ts:1093:31)\n    at WorkflowExecute.runNode (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-core@file+packages+core_@opentelemetry+api@1.9.0_@opentelemetry+sdk-trace-base@1.30_08b575bec2313d5d8a4cc75358971443/node_modules/n8n-core/src/execution-engine/workflow-execute.ts:1274:22)\n    at /usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-core@file+packages+core_@opentelemetry+api@1.9.0_@opentelemetry+sdk-trace-base@1.30_08b575bec2313d5d8a4cc75358971443/node_modules/n8n-core/src/execution-engine/workflow-execute.ts:1676:38\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at /usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-core@file+packages+core_@opentelemetry+api@1.9.0_@opentelemetry+sdk-trace-base@1.30_08b575bec2313d5d8a4cc75358971443/node_modules/n8n-core/src/execution-engine/workflow-execute.ts:2292:11"
+            },
+            "lastNodeExecuted": "Stop and Error",
+            "mode": "webhook"
+          },
+          "workflow": {
+            "id": "k8FI4Uvcl8VrbORv",
+            "name": "Deal Updates"
+          }
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a record": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Create a record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "ba0032d1-df01-4182-b932-82003075c07b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5b8ab9d7e4dd624ba91ae314ab653cf7e358ae6ce45ce99a096773e83e26d085"
+  },
+  "id": "99pWK0AunU67VVFb",
+  "tags": [
+    {
+      "createdAt": "2025-10-20T00:53:09.275Z",
+      "updatedAt": "2025-10-20T00:53:09.275Z",
+      "id": "afcNK9MWUZg1opaR",
+      "name": "System"
+    }
+  ]
+}
