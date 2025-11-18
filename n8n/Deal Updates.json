@@ -1,0 +1,786 @@
+{
+  "name": "Deal Updates",
+  "nodes": [
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email[0].value }}",
+        "subject": "=Let's do this {{ $json.first_name }}!",
+        "message": "=Hi {{ $json.first_name }},\n<br><br>\nThanks for taking care of the invoice so quickly — really appreciate it.\n<br><br>\nI’m genuinely excited that we’ll be working together and can’t wait to help you streamline things and deliver real results.\n<br><br>\nI’ll send over some quick onboarding instructions along with a calendar link so we can kick things off properly.\n<br><br>\nLooking forward to our first call, and thanks again for putting your trust in us.\n<br><br>\nBest,<br>\nTom\n<br><br>\n<table style=\"font-family:'Poppins','Nunito',sans-serif;color:#000000;background-color:#ffffff;padding:10px 0;border-collapse:collapse;width:100%;max-width:600px;\">\n  <tr>\n    <td style=\"vertical-align:middle;padding-right:15px;width:120px;\">\n      <div style=\"background-color:#ffffff;padding:5px;border-radius:4px;display:inline-block;vertical-align:middle;\">\n        <img src=\"https://cdn.prod.website-files.com/6830c8a9084bf2aafa8157f6/68f577015ea873d2f3d07978_Logo%20Email%20Footer.png\"\n             alt=\"Bright Interaction Logo\"\n             width=\"120\"\n             style=\"display:block;max-width:120px;height:auto;\">\n      </div>\n    </td>\n    <td style=\"vertical-align:middle;padding-left:10px;\">\n      <div style=\"font-weight:600;font-size:16px;\">Tom Isgren</div>\n      <div style=\"font-size:14px;color:#555;\">Founder @ Bright Interaction</div>\n      <div style=\"font-size:14px;margin-top:6px;\">\n        <a href=\"mailto:tom@brightinteraction.com\" style=\"color:#1a73e8;text-decoration:none;\">tom@brightinteraction.com</a>\n      </div>\n      <div style=\"font-size:14px;\">+46 762 978 035</div>\n      <div style=\"font-size:14px;\">\n        <a href=\"https://brightinteraction.com\" style=\"color:#000000;text-decoration:none;\">brightinteraction.com</a>\n      </div>\n      <div style=\"font-size:14px;margin-top:4px;\">\n        <a href=\"https://www.linkedin.com/in/tom-brightinteraction/\" style=\"color:#731963;text-decoration:none;\">LinkedIn</a>\n      </div>\n    </td>\n  </tr>\n  <tr>\n    <td colspan=\"2\" style=\"border-top:1px solid #f0f0f0;padding-top:8px;font-size:12px;color:#777;text-align:left;\">\n      © 2025 Bright Interaction Automation Agency. All rights reserved.\n    </td>\n  </tr>\n</table>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        896,
+        -352
+      ],
+      "id": "29eeb7ba-fcba-4e61-8970-81042a595449",
+      "name": "Thank You Email",
+      "webhookId": "74e0c7ba-0d81-495b-ba1d-b5e8ce967ac0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N8Z7eh1G5JC1M3Qo",
+          "name": "Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 5.31,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        -352
+      ],
+      "id": "5492a00c-5850-4552-985c-db0d4ecc17b6",
+      "name": "5,31 min",
+      "webhookId": "0dd35063-479e-423c-a5ff-62987bf53ca2"
+    },
+    {
+      "parameters": {
+        "amount": 4.23,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        -160
+      ],
+      "id": "446791e7-bb8c-456a-9d32-3761ebe91318",
+      "name": "4,23min",
+      "webhookId": "0dd35063-479e-423c-a5ff-62987bf53ca2"
+    },
+    {
+      "parameters": {
+        "resource": "person",
+        "operation": "get",
+        "personId": "={{ $json.body.data.person_id }}"
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        448,
+        -352
+      ],
+      "id": "b6ec31da-5091-417b-b916-99874154e07a",
+      "name": "Get a person",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "person",
+        "operation": "get",
+        "personId": "={{ $json.body.data.person_id }}"
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        448,
+        -160
+      ],
+      "id": "ee59a76c-9f6b-4c86-9e20-3d9ba4a93d15",
+      "name": "Get a person1",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email[0].value }}",
+        "subject": "=Thanks for your time, {{ $json.first_name }}. ",
+        "message": "=Hi {{ $json.first_name }},\n<br><br>\nThanks so much for considering us. \n<br><br>\nI completely understand that the timing might not be right at the moment, and that’s perfectly fine.\n<br><br>\nI’ve marked things as closed on our end for now, so you won’t get any follow-ups from us. Just know that if priorities shift or you decide to revisit automation later, we’ll be here and ready to help.\n<br><br>\nWishing you continued success and smooth growth ahead.\n<br><br>\nAll the best,<br>\nTom\n<br><br>\n<table style=\"font-family:'Poppins','Nunito',sans-serif;color:#000000;background-color:#ffffff;padding:10px 0;border-collapse:collapse;width:100%;max-width:600px;\">\n  <tr>\n    <td style=\"vertical-align:middle;padding-right:15px;width:120px;\">\n      <div style=\"background-color:#ffffff;padding:5px;border-radius:4px;display:inline-block;vertical-align:middle;\">\n        <img src=\"https://cdn.prod.website-files.com/6830c8a9084bf2aafa8157f6/68f577015ea873d2f3d07978_Logo%20Email%20Footer.png\"\n             alt=\"Bright Interaction Logo\"\n             width=\"120\"\n             style=\"display:block;max-width:120px;height:auto;\">\n      </div>\n    </td>\n    <td style=\"vertical-align:middle;padding-left:10px;\">\n      <div style=\"font-weight:600;font-size:16px;\">Tom Isgren</div>\n      <div style=\"font-size:14px;color:#555;\">Founder @ Bright Interaction</div>\n      <div style=\"font-size:14px;margin-top:6px;\">\n        <a href=\"mailto:tom@brightinteraction.com\" style=\"color:#1a73e8;text-decoration:none;\">tom@brightinteraction.com</a>\n      </div>\n      <div style=\"font-size:14px;\">+46 762 978 035</div>\n      <div style=\"font-size:14px;\">\n        <a href=\"https://brightinteraction.com\" style=\"color:#000000;text-decoration:none;\">brightinteraction.com</a>\n      </div>\n      <div style=\"font-size:14px;margin-top:4px;\">\n        <a href=\"https://www.linkedin.com/in/tom-brightinteraction/\" style=\"color:#731963;text-decoration:none;\">LinkedIn</a>\n      </div>\n    </td>\n  </tr>\n  <tr>\n    <td colspan=\"2\" style=\"border-top:1px solid #f0f0f0;padding-top:8px;font-size:12px;color:#777;text-align:left;\">\n      © 2025 Bright Interaction Automation Agency. All rights reserved.\n    </td>\n  </tr>\n</table>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        896,
+        -160
+      ],
+      "id": "1e5c1078-fd10-4bbb-9af9-37e6bbdfcf4f",
+      "name": "Goodbye Email",
+      "webhookId": "74e0c7ba-0d81-495b-ba1d-b5e8ce967ac0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N8Z7eh1G5JC1M3Qo",
+          "name": "Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('5,31 min').first().json.email[0].value }}",
+        "subject": "=Let’s get your onboarding call scheduled ",
+        "message": "=Hi again,\n<br><br>\nJust following up on my last email, the next step is to book our onboarding call.\n<br><br>\nAutomation projects usually involve a few different tools and platforms, which can get tricky with logins, 2FA, and access sharing.\n<br><br>\nThat’s why I like to kick things off with a short screen-share session (about 60 minutes). We’ll set everything up live and make sure the foundation is solid from the start.\n<br><br>\nIt’s also the perfect time to align on timelines, communication, and expectations — and take care of any 2FA hurdles while we’re at it.\n<br><br>\n👉 <a href=\"https://cal.com/brightinteraction/onboarding\">Click here to book your onboarding call.</a>\n<br><br>\nIdeally, we get this done within the next 72 hours, but I’ll work around your schedule.\n<br><br>\nAppreciate it, and looking forward to getting things rolling!\n<br><br>\nThanks,<br>\nTom\n<br><br>\n<table style=\"font-family:'Poppins','Nunito',sans-serif;color:#000000;background-color:#ffffff;padding:10px 0;border-collapse:collapse;width:100%;max-width:600px;\">\n  <tr>\n    <td style=\"vertical-align:middle;padding-right:15px;width:120px;\">\n      <div style=\"background-color:#ffffff;padding:5px;border-radius:4px;display:inline-block;vertical-align:middle;\">\n        <img src=\"https://cdn.prod.website-files.com/6830c8a9084bf2aafa8157f6/68f577015ea873d2f3d07978_Logo%20Email%20Footer.png\"\n             alt=\"Bright Interaction Logo\"\n             width=\"120\"\n             style=\"display:block;max-width:120px;height:auto;\">\n      </div>\n    </td>\n    <td style=\"vertical-align:middle;padding-left:10px;\">\n      <div style=\"font-weight:600;font-size:16px;\">Tom Isgren</div>\n      <div style=\"font-size:14px;color:#555;\">Founder @ Bright Interaction</div>\n      <div style=\"font-size:14px;margin-top:6px;\">\n        <a href=\"mailto:tom@brightinteraction.com\" style=\"color:#1a73e8;text-decoration:none;\">tom@brightinteraction.com</a>\n      </div>\n      <div style=\"font-size:14px;\">+46 762 978 035</div>\n      <div style=\"font-size:14px;\">\n        <a href=\"https://brightinteraction.com\" style=\"color:#000000;text-decoration:none;\">brightinteraction.com</a>\n      </div>\n      <div style=\"font-size:14px;margin-top:4px;\">\n        <a href=\"https://www.linkedin.com/in/tom-brightinteraction/\" style=\"color:#731963;text-decoration:none;\">LinkedIn</a>\n      </div>\n    </td>\n  </tr>\n  <tr>\n    <td colspan=\"2\" style=\"border-top:1px solid #f0f0f0;padding-top:8px;font-size:12px;color:#777;text-align:left;\">\n      © 2025 Bright Interaction Automation Agency. All rights reserved.\n    </td>\n  </tr>\n</table>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1344,
+        -352
+      ],
+      "id": "a5aaa32e-4631-43a7-b357-033976563054",
+      "name": "Onboarding Instructions",
+      "webhookId": "74e0c7ba-0d81-495b-ba1d-b5e8ce967ac0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N8Z7eh1G5JC1M3Qo",
+          "name": "Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "lead",
+        "title": "={{ $('4,23min').first().json.name }}",
+        "organization_id": "={{ $('Webhook').first().json.body.data.org_id }}",
+        "additionalFields": {
+          "label_ids": [
+            "40ace8e3-6175-449e-a6c9-24dd5b30808f"
+          ],
+          "person_id": "={{ $('Webhook').first().json.body.data.person_id }}"
+        }
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        -160
+      ],
+      "id": "f957e7ee-5e0b-45cd-83f9-946bcc3ffe98",
+      "name": "Move to Lead",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "5221f3fe-4ece-41e0-b617-5c567128c741",
+                    "leftValue": "={{ $json.body.data.stage_id }}",
+                    "rightValue": 7,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Demo"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.data.stage_id }}",
+                    "rightValue": 8,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    },
+                    "id": "369e755f-c2a8-4d46-82b4-136072531473"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Follow Up"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        672,
+        -640
+      ],
+      "id": "44284743-4a20-4dc8-969e-d81d0c873f0c",
+      "name": "Switch1"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "9ZomKoF7ZInA3Iox",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/9ZomKoF7ZInA3Iox",
+          "cachedResultName": "Deal -> Follow Up"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "person_id": "={{ $('Webhook').first().json.body.data.person_id }}",
+            "org_id": "={{ $('Webhook').first().json.body.data.org_id }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "person_id",
+              "displayName": "person_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            },
+            {
+              "id": "org_id",
+              "displayName": "org_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        896,
+        -544
+      ],
+      "id": "c9dd07ef-bf66-4686-b8b8-3ecacfdd20b4",
+      "name": "Call 'Follow Up Sequence'"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f3ad126a-785a-46d9-ae37-2f5b23c8fb1e",
+              "leftValue": "={{ $json.body.data.stage_id }}",
+              "rightValue": 7,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "7a73337d-827a-45e9-befa-69be9ff9bae4",
+              "leftValue": "={{ $json.body.data.stage_id }}",
+              "rightValue": 8,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        -640
+      ],
+      "id": "fd81e5f5-1c52-4002-b7a6-2c8e9d91463b",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "e2b7167f-0894-4ce9-957b-ba7dded014d2",
+                    "leftValue": "={{ $json.body.data.status }}",
+                    "rightValue": "open",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Open"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.data.status }}",
+                    "rightValue": "won",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "2167c10a-2235-454b-86c4-a941cbfe46fc"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Won"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "1de814d9-a63a-4ed9-b9f5-5872ffd357d8",
+                    "leftValue": "={{ $json.body.data.status }}",
+                    "rightValue": "lost",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Lost"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        224,
+        -368
+      ],
+      "id": "68e44da7-9197-49ad-8ab1-458cb101977b",
+      "name": "Status"
+    },
+    {
+      "parameters": {
+        "amount": 6.21,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1120,
+        -352
+      ],
+      "id": "21bfcbf3-d3c0-4e61-9561-d5b8751e6d7c",
+      "name": "6,21min",
+      "webhookId": "015cacdc-65cf-4c21-9dfc-a6292c3474ab"
+    },
+    {
+      "parameters": {
+        "resource": "person",
+        "operation": "get",
+        "personId": "={{ $('Webhook').item.json.body.data.person_id }}"
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        896,
+        -736
+      ],
+      "id": "c6b99615-9f86-4a63-9171-e7f194c0a499",
+      "name": "Get a person2",
+      "retryOnFail": true,
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C086UB5G5MK",
+          "mode": "list",
+          "cachedResultName": "leads"
+        },
+        "messageType": "block",
+        "blocksUi": "={\n\t\"blocks\": [\n\t\t{\n\t\t\t\"type\": \"section\",\n\t\t\t\"text\": {\n\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\"text\": \"Demo Booked:\\n*<https://brightinteraction.pipedrive.com/organization/{{ $('Webhook').first().json.body.data.org_id }}|{{ $json.name }}>*\"\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"type\": \"section\",\n\t\t\t\"fields\": [\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\t\"text\": \"*Company:*\\n{{ $json.org_id.name }}\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\t\"text\": \"*When:*\\n{{ $json.next_activity_date }} {{ $json.next_activity_time.slice(0,5) }}\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\t\"text\": \"*Email:*\\n{{ $json.email[0].value }}\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\t\"text\": \"*Phone:*\\n{{ $json.phone[0].value }}\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\t\"text\": \"*Website:*\\nhttps://{{ $json.email[0].value.match(/@(.+)/)[1] }}\"\n\t\t\t\t}\n\t\t\t]\n\t\t}\n\t]\n}",
+        "otherOptions": {
+          "unfurl_links": false,
+          "unfurl_media": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        1120,
+        -736
+      ],
+      "id": "ecfd1c7c-fc7a-4d3f-9d22-e57b2fa29163",
+      "name": "Notify in Leads Channel",
+      "webhookId": "c2609ac9-71ab-4e26-a03b-12132d15e94b",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "si4axd1ESHjcPLbx",
+          "name": "Jeeves"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "724880b5-1b72-41cb-8700-e5a9bd57638e",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        -352
+      ],
+      "id": "5edd2a77-cf32-4f36-94cd-54a354f7fbe0",
+      "name": "Webhook",
+      "webhookId": "724880b5-1b72-41cb-8700-e5a9bd57638e"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "automation.brightinteraction.com",
+            "user-agent": "Pipedrive Webhooks",
+            "content-length": "1107",
+            "accept": "application/json, text/plain, */*",
+            "accept-encoding": "gzip, compress, deflate, br",
+            "content-type": "application/json",
+            "via": "1.1 Caddy",
+            "x-forwarded-for": "34.250.16.92",
+            "x-forwarded-host": "automation.brightinteraction.com",
+            "x-forwarded-proto": "https"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "data": {
+              "add_time": "2025-10-26T19:52:21Z",
+              "channel": null,
+              "channel_id": null,
+              "close_time": null,
+              "creator_user_id": 26901915,
+              "currency": "SEK",
+              "custom_fields": {},
+              "expected_close_date": null,
+              "first_won_time": "2025-10-26T20:14:55Z",
+              "id": 56,
+              "label_ids": [],
+              "lost_reason": null,
+              "lost_time": null,
+              "org_id": 108,
+              "origin": "API",
+              "origin_id": null,
+              "owner_id": 26901915,
+              "person_id": 171,
+              "pipeline_id": 2,
+              "probability": 50,
+              "stage_change_time": "2025-10-27T22:05:19Z",
+              "stage_id": 9,
+              "status": "open",
+              "title": "Conversion BluePrint",
+              "update_time": "2025-10-27T22:05:19Z",
+              "value": 0,
+              "visible_to": "3",
+              "won_time": null,
+              "is_archived": false,
+              "archive_time": null
+            },
+            "previous": {
+              "stage_id": 7
+            },
+            "meta": {
+              "action": "change",
+              "company_id": "16237806",
+              "correlation_id": "cc0734ac-292d-4017-8621-37d493a7bc19",
+              "entity_id": "56",
+              "entity": "deal",
+              "id": "345e8fa6-a0f7-4dbc-9907-d60b4fc0cb76",
+              "is_bulk_edit": false,
+              "timestamp": "2025-10-27T22:05:19.568Z",
+              "type": "general",
+              "user_id": "26901915",
+              "version": "2.0",
+              "webhook_id": "1762012",
+              "webhook_owner_id": "26901915",
+              "change_source": "app",
+              "permitted_user_ids": [
+                "26901915"
+              ],
+              "attempt": 1,
+              "host": "brightinteraction.pipedrive.com"
+            }
+          },
+          "webhookUrl": "https://automation.brightinteraction.com/webhook/724880b5-1b72-41cb-8700-e5a9bd57638e",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Thank You Email": {
+      "main": [
+        [
+          {
+            "node": "6,21min",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5,31 min": {
+      "main": [
+        [
+          {
+            "node": "Thank You Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4,23min": {
+      "main": [
+        [
+          {
+            "node": "Goodbye Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a person": {
+      "main": [
+        [
+          {
+            "node": "5,31 min",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a person1": {
+      "main": [
+        [
+          {
+            "node": "4,23min",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Goodbye Email": {
+      "main": [
+        [
+          {
+            "node": "Move to Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "Get a person2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Call 'Follow Up Sequence'",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Status": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get a person",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get a person1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "6,21min": {
+      "main": [
+        [
+          {
+            "node": "Onboarding Instructions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a person2": {
+      "main": [
+        [
+          {
+            "node": "Notify in Leads Channel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "executionTimeout": 1200,
+    "availableInMCP": false,
+    "errorWorkflow": "99pWK0AunU67VVFb",
+    "timeSavedPerExecution": 30
+  },
+  "versionId": "3de45136-b119-4a21-a307-aaf4c3524dba",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5b8ab9d7e4dd624ba91ae314ab653cf7e358ae6ce45ce99a096773e83e26d085"
+  },
+  "id": "k8FI4Uvcl8VrbORv",
+  "tags": [
+    {
+      "createdAt": "2025-10-22T21:58:32.807Z",
+      "updatedAt": "2025-10-22T21:58:32.807Z",
+      "id": "EZ2x2iSdkuYpVnTs",
+      "name": "CRM"
+    },
+    {
+      "createdAt": "2025-10-22T21:58:10.460Z",
+      "updatedAt": "2025-10-22T21:58:10.460Z",
+      "id": "J26baZIfOPS5yFo3",
+      "name": "Sales"
+    }
+  ]
+}
