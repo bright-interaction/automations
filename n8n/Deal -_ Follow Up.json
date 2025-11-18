@@ -1,0 +1,257 @@
+{
+  "name": "Deal -> Follow Up",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "person_id",
+              "type": "number"
+            },
+            {
+              "name": "org_id",
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "827a637e-3ebe-44b0-bfd9-a5f9418186e5",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "resource": "person",
+        "operation": "get",
+        "personId": "={{ $json.person_id }}"
+      },
+      "type": "n8n-nodes-base.pipedrive",
+      "typeVersion": 1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "397982a1-fc7e-429e-a55f-80d57d57a5dc",
+      "name": "Get a person",
+      "credentials": {
+        "pipedriveApi": {
+          "id": "Lk8ltw4cugKglZ5L",
+          "name": "Pipedrive - API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "15KIfWXsiWY_AA0jUBa04pjakzZgvc2_W",
+          "mode": "list",
+          "cachedResultName": "The-Conversion-Blueprint-EU.pdf",
+          "cachedResultUrl": "https://drive.google.com/file/d/15KIfWXsiWY_AA0jUBa04pjakzZgvc2_W/view?usp=drivesdk"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        672,
+        0
+      ],
+      "id": "e0fdce31-e1f5-4ee6-8d91-465151157b0d",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "jB6XnYCu8xeO568P",
+          "name": "Google Drive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email[0].value }}",
+        "subject": "=Thought you’d find this helpful",
+        "message": "=Hey {{ $json.first_name }},\n<br><br>\nHope your week’s going well!\n<br><br>\nI’ve been thinking about our chat the other day and wanted to share something that ties in nicely with what we discussed.\n<br><br>\nAttached is a short PDF guide with a few automation ideas and tool recommendations that help teams cut manual work from their sales and onboarding. The same kind of improvements we talked about implementing for you.\n<br><br>\nEven if you’re still deciding on next steps, it should give you a few practical ideas to start simplifying things internally.\n<br><br>\nWhen you’ve had a look, I’d love to hear what stood out — or we can schedule a short follow-up to explore how this could fit your setup more directly.\n<br><br>\nCheers,<br>\nTom\n<br><br>\n<table style=\"font-family:'Poppins','Nunito',sans-serif;color:#000000;background-color:#ffffff;padding:10px 0;border-collapse:collapse;width:100%;max-width:600px;\">\n  <tr>\n    <td style=\"vertical-align:middle;padding-right:15px;width:120px;\">\n      <div style=\"background-color:#ffffff;padding:5px;border-radius:4px;display:inline-block;vertical-align:middle;\">\n        <img src=\"https://cdn.prod.website-files.com/6830c8a9084bf2aafa8157f6/68f577015ea873d2f3d07978_Logo%20Email%20Footer.png\"\n             alt=\"Bright Interaction Logo\"\n             width=\"120\"\n             style=\"display:block;max-width:120px;height:auto;\">\n      </div>\n    </td>\n    <td style=\"vertical-align:middle;padding-left:10px;\">\n      <div style=\"font-weight:600;font-size:16px;\">Tom Isgren</div>\n      <div style=\"font-size:14px;color:#555;\">Founder @ Bright Interaction</div>\n      <div style=\"font-size:14px;margin-top:6px;\">\n        <a href=\"mailto:tom@brightinteraction.com\" style=\"color:#1a73e8;text-decoration:none;\">tom@brightinteraction.com</a>\n      </div>\n      <div style=\"font-size:14px;\">+46 762 978 035</div>\n      <div style=\"font-size:14px;\">\n        <a href=\"https://brightinteraction.com\" style=\"color:#000000;text-decoration:none;\">brightinteraction.com</a>\n      </div>\n      <div style=\"font-size:14px;margin-top:4px;\">\n        <a href=\"https://www.linkedin.com/in/tom-brightinteraction/\" style=\"color:#731963;text-decoration:none;\">LinkedIn</a>\n      </div>\n    </td>\n  </tr>\n  <tr>\n    <td colspan=\"2\" style=\"border-top:1px solid #f0f0f0;padding-top:8px;font-size:12px;color:#777;text-align:left;\">\n      © 2025 Bright Interaction Automation Agency. All rights reserved.\n    </td>\n  </tr>\n</table>",
+        "options": {
+          "appendAttribution": false,
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        896,
+        0
+      ],
+      "id": "76c6cef3-29cf-4ef4-8222-34875fd528ea",
+      "name": "Follow Up Lead Magnet",
+      "webhookId": "74e0c7ba-0d81-495b-ba1d-b5e8ce967ac0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N8Z7eh1G5JC1M3Qo",
+          "name": "Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 3,
+        "unit": "days"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        0
+      ],
+      "id": "bb60f831-a1c0-45ee-9d93-9e4b6b142b3b",
+      "name": "3 days",
+      "webhookId": "6da166e2-331b-4d30-878e-c9ab47113a86"
+    },
+    {
+      "parameters": {
+        "unit": "days"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "a33b5613-66c4-4d4b-9a8d-4644929ff38a",
+      "name": "5 days",
+      "webhookId": "cec59b89-863a-43ea-ba4e-14704268b695"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Get a person').item.json.email[0].value }}",
+        "subject": "=Quick win you might like :)",
+        "message": "=Hey {{ $('Get a person').item.json.first_name }},\n<br><br>\nJust wanted to share a quick automation idea we recently rolled out for another client. It helped them cut their lead-handoff time by 40%.\n<br><br>\nIt’s a small tweak, but it made a big difference in keeping their sales team focused on closing deals instead of chasing tasks.\n<br><br>\nWould you be open to seeing how something similar could fit into your setup?\n<br><br>\nCheers,<br>\nTom\n<br><br>\n<table style=\"font-family:'Poppins','Nunito',sans-serif;color:#000000;background-color:#ffffff;padding:10px 0;border-collapse:collapse;width:100%;max-width:600px;\">\n  <tr>\n    <td style=\"vertical-align:middle;padding-right:15px;width:120px;\">\n      <div style=\"background-color:#ffffff;padding:5px;border-radius:4px;display:inline-block;vertical-align:middle;\">\n        <img src=\"https://cdn.prod.website-files.com/6830c8a9084bf2aafa8157f6/68f577015ea873d2f3d07978_Logo%20Email%20Footer.png\"\n             alt=\"Bright Interaction Logo\"\n             width=\"120\"\n             style=\"display:block;max-width:120px;height:auto;\">\n      </div>\n    </td>\n    <td style=\"vertical-align:middle;padding-left:10px;\">\n      <div style=\"font-weight:600;font-size:16px;\">Tom Isgren</div>\n      <div style=\"font-size:14px;color:#555;\">Founder @ Bright Interaction</div>\n      <div style=\"font-size:14px;margin-top:6px;\">\n        <a href=\"mailto:tom@brightinteraction.com\" style=\"color:#1a73e8;text-decoration:none;\">tom@brightinteraction.com</a>\n      </div>\n      <div style=\"font-size:14px;\">+46 762 978 035</div>\n      <div style=\"font-size:14px;\">\n        <a href=\"https://brightinteraction.com\" style=\"color:#000000;text-decoration:none;\">brightinteraction.com</a>\n      </div>\n      <div style=\"font-size:14px;margin-top:4px;\">\n        <a href=\"https://www.linkedin.com/in/tom-brightinteraction/\" style=\"color:#731963;text-decoration:none;\">LinkedIn</a>\n      </div>\n    </td>\n  </tr>\n  <tr>\n    <td colspan=\"2\" style=\"border-top:1px solid #f0f0f0;padding-top:8px;font-size:12px;color:#777;text-align:left;\">\n      © 2025 Bright Interaction Automation Agency. All rights reserved.\n    </td>\n  </tr>\n</table>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1344,
+        0
+      ],
+      "id": "86851226-2182-42df-a70c-ef01a7f1911c",
+      "name": "Follow Up Mini-Win",
+      "webhookId": "74e0c7ba-0d81-495b-ba1d-b5e8ce967ac0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N8Z7eh1G5JC1M3Qo",
+          "name": "Gmail"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Get a person",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a person": {
+      "main": [
+        [
+          {
+            "node": "3 days",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Follow Up Lead Magnet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Follow Up Lead Magnet": {
+      "main": [
+        [
+          {
+            "node": "5 days",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3 days": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5 days": {
+      "main": [
+        [
+          {
+            "node": "Follow Up Mini-Win",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "timeSavedPerExecution": 60
+  },
+  "versionId": "052830ec-06b3-4dbc-8995-7237456eed27",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5b8ab9d7e4dd624ba91ae314ab653cf7e358ae6ce45ce99a096773e83e26d085"
+  },
+  "id": "9ZomKoF7ZInA3Iox",
+  "tags": [
+    {
+      "createdAt": "2025-10-22T21:58:32.807Z",
+      "updatedAt": "2025-10-22T21:58:32.807Z",
+      "id": "EZ2x2iSdkuYpVnTs",
+      "name": "CRM"
+    },
+    {
+      "createdAt": "2025-10-22T21:58:10.460Z",
+      "updatedAt": "2025-10-22T21:58:10.460Z",
+      "id": "J26baZIfOPS5yFo3",
+      "name": "Sales"
+    }
+  ]
+}
